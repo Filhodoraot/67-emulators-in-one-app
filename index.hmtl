@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>67 Emulators in One App</title>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="card">
+      <h1>🎮 67 Emulators in One App</h1>
+      <p>Coloque sua ROM e o site escolhe o emulador certo.</p>
+
+      <label class="upload-box" for="romInput">
+        <span>Arraste ou escolha sua ROM</span>
+        <small>.gba, .gb, .gbc, .nes, .sfc, .smc, .nds</small>
+      </label>
+
+      <input id="romInput" type="file" accept=".gba,.gb,.gbc,.nes,.sfc,.smc,.nds,.zip" />
+
+      <div id="info" class="info">
+        Nenhuma ROM carregada.
+      </div>
+
+      <button id="playButton" disabled>Jogar</button>
+
+      <p class="warning">
+        No games included. Use your own ROM files.
+      </p>
+    </section>
+
+    <section class="emulator-area">
+      <iframe id="emulatorFrame" title="67 Emulators in One App"></iframe>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
