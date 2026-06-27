@@ -39,11 +39,19 @@
       </section>
 
       <section id="uploadZone" class="upload-zone">
-        <button class="console-hotspot console-hotspot-left" type="button" onclick="romInput.click()">
+        <button
+          class="console-hotspot console-hotspot-left"
+          type="button"
+          onclick="document.getElementById('romInput').click()"
+        >
           <img src="consoles-esquerda.png" class="upload-consoles" alt="Consoles clássicos" />
         </button>
 
-        <button class="console-hotspot console-hotspot-right" type="button" onclick="romInput.click()">
+        <button
+          class="console-hotspot console-hotspot-right"
+          type="button"
+          onclick="document.getElementById('romInput').click()"
+        >
           <img src="consoles-direita.png" class="upload-consoles" alt="Consoles Nintendo DS, 3DS e 64" />
         </button>
 
@@ -69,79 +77,16 @@
 
       <section class="middle-grid">
         <article class="systems-card">
-          <h2>Sistemas Suportados</h2>
-          <span class="pink-line"></span>
-
-          <div class="systems-list">
-            <div class="system-item">
-              <div class="system-icon gb-icon"></div>
-              <p>Game Boy<br>/ Color</p>
-            </div>
-
-            <div class="system-item">
-              <div class="system-icon gba-icon"></div>
-              <p>Game Boy<br>Advance</p>
-            </div>
-
-            <div class="system-item">
-              <div class="system-icon ds-icon"></div>
-              <p>Nintendo<br>DS</p>
-            </div>
-
-            <div class="system-item">
-              <div class="system-icon ds-icon dark"></div>
-              <p>Nintendo<br>3DS</p>
-            </div>
-
-            <div class="system-item">
-              <div class="system-icon n64-icon"></div>
-              <p>Nintendo<br>64</p>
-            </div>
+          <div class="card-image-mask">
+            <img src="card-sistemas.png" class="card-img" alt="Sistemas suportados" />
           </div>
-
-          <button class="systems-button" type="button">
-            Ver todos os 67 sistemas
-            <span>›</span>
-          </button>
         </article>
 
         <article class="preview-card">
-          <h2>Jogue na hora. Sem downloads.</h2>
-          <span class="pink-line"></span>
-
           <div id="emulatorHolder" class="emulator-holder">
-            <div class="fake-emulator">
-              <div class="fake-leftbar">
-                <div class="tiny-rat">🐭</div>
-                <span>GB</span>
-              </div>
-
-              <div class="fake-screen">
-                <div class="fake-player"></div>
-              </div>
-
-              <div class="fake-controls">
-                <div class="fake-top-icons">
-                  <span>▣</span>
-                  <span>▣</span>
-                  <span>⋮</span>
-                </div>
-
-                <div class="fake-dpad">
-                  <span></span>
-                </div>
-
-                <button class="fake-a">A</button>
-                <button class="fake-b">B</button>
-
-                <div class="fake-small-buttons">
-                  <span>SELECT</span>
-                  <span>START</span>
-                </div>
-              </div>
+            <div class="card-image-mask">
+              <img src="card-preview.png" class="card-img" alt="Prévia do emulador" />
             </div>
-
-            <p class="fake-caption">Game Boy / Color · Pokemon Red (example)</p>
           </div>
         </article>
       </section>
