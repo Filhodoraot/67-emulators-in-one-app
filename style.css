@@ -159,7 +159,7 @@ label {
 }
 
 .hero-67:hover {
-  transform: scale(1.06);
+  transform: scale(1.03);
 }
 
 .hero-text-wrap {
@@ -229,15 +229,15 @@ label {
 }
 
 .console-hotspot-left {
-  width: 340px;
-  left: 48px;
-  top: 46px;
+  width: 285px;
+  left: 62px;
+  top: 62px;
 }
 
 .console-hotspot-right {
-  width: 340px;
-  right: 58px;
-  top: 44px;
+  width: 285px;
+  right: 74px;
+  top: 60px;
 }
 
 .upload-consoles {
@@ -249,9 +249,9 @@ label {
 }
 
 .console-hotspot:hover {
-  transform: scale(1.14);
+  transform: scale(1.06);
   z-index: 10;
-  filter: drop-shadow(0 24px 30px rgba(0, 0, 0, 0.7));
+  filter: drop-shadow(0 20px 24px rgba(0, 0, 0, 0.65));
 }
 
 .upload-card {
