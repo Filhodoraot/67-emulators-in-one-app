@@ -793,4 +793,46 @@ label {
     padding: 14px;
     text-align: center;
   }
+
+  /* CORREÇÃO FINAL DOS CARDS, SEM ZOOM E SEM CORTAR */
+.systems-card,
+.preview-card {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.card-image-mask {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  border-radius: 18px !important;
+  background: transparent !important;
+  display: block !important;
+}
+
+.card-img {
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+  min-height: 0 !important;
+  display: block !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  transform: none !important;
+}
+
+.emulator-holder {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+}
+  
 }
