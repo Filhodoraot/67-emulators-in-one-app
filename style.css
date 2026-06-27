@@ -337,12 +337,11 @@ label {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
 }
 
-/* SEM ZOOM NOS CARDS */
 .systems-card,
 .preview-card {
-  height: auto !important;
-  min-height: 0 !important;
-  overflow: visible;
+  height: 260px;
+  min-height: 260px;
+  overflow: hidden;
   padding: 0;
   position: relative;
   background: transparent;
@@ -352,17 +351,23 @@ label {
 
 .card-image-mask {
   width: 100%;
-  height: auto !important;
-  min-height: 0 !important;
-  overflow: visible;
+  height: 260px;
+  min-height: 260px;
+  overflow: hidden;
   border-radius: 18px;
   background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .card-img {
-  width: 100%;
-  height: auto !important;
+  width: auto !important;
+  height: 100% !important;
+  max-width: 100% !important;
   min-height: 0 !important;
+
   display: block;
   object-fit: contain !important;
   object-position: center;
@@ -371,10 +376,10 @@ label {
 
 .emulator-holder {
   width: 100%;
-  height: auto !important;
-  min-height: 0 !important;
+  height: 260px;
+  min-height: 260px;
   display: block;
-  overflow: visible;
+  overflow: hidden;
   border-radius: 18px;
   background: transparent;
 }
@@ -751,6 +756,14 @@ label {
 
   .upload-card strong {
     font-size: 25px;
+  }
+
+  .systems-card,
+  .preview-card,
+  .card-image-mask,
+  .emulator-holder {
+    height: 230px;
+    min-height: 230px;
   }
 
   .save-item {
