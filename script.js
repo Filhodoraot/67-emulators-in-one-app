@@ -425,7 +425,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
   const safeControl = safeJs(control || core);
   const safeSystemName = safeJs(systemName || core);
   const threadsValue = needsThreads ? "true" : "false";
-  const is3DS = safeCore === "azahar" ? "true" : "false";
+  const is3DS = core === "azahar" ? "true" : "false";
 
   return `
     <!DOCTYPE html>
@@ -496,7 +496,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           if (is3DS) {
             showNotice(
               "<strong>3DS deu erro.</strong><br>" +
-              "Confira se existe /data/cores/azahar-thread-wasm.data e se a ROM está extraída e descriptografada."
+              "Confira se a ROM está extraída e descriptografada. O core já está carregando certo."
             );
           }
         });
@@ -507,7 +507,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           if (is3DS) {
             showNotice(
               "<strong>3DS não iniciou.</strong><br>" +
-              "Use .3ds, .cci ou .cxi extraído. Se for .cia, .7z ou criptografado, pode falhar."
+              "Use .3ds, .cci ou .cxi extraído e descriptografado. Se for .cia, .7z ou criptografado, pode falhar."
             );
           }
         });
@@ -522,9 +522,16 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
         window.EJS_backgroundColor = "#000000";
         window.EJS_controlScheme = "${safeControl}";
         window.EJS_volume = 0.7;
-        window.EJS_forceLegacyCores = false;
 
         window.EJS_forceLegacyCores = false;
+
+        window.EJS_cacheConfig = {
+          enabled: false,
+          cacheMaxSizeMB: 0,
+          cacheMaxAgeMins: 0
+        };
+
+        window.EJS_CacheLimit = 0;
         window.EJS_disableLocalStorage = is3DS;
         window.EJS_disableDatabases = is3DS;
 
@@ -537,7 +544,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
             if (typeof SharedArrayBuffer === "undefined") {
               showNotice(
                 "<strong>Aviso do 3DS:</strong><br>" +
-                "SharedArrayBuffer ainda está bloqueado. Confira o netlify.toml e faça Clear cache and deploy."
+                "SharedArrayBuffer ainda está bloqueado. Confira o arquivo _headers e faça novo deploy."
               );
             }
           }, 700);
