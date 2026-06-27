@@ -25,22 +25,26 @@ let romUrl = null;
 let pendingSave = null;
 
 const systemsByExtension = {
-  gb: { core: "gb", name: "Game Boy", short: "GB" },
-  gbc: { core: "gb", name: "Game Boy Color", short: "GBC" },
-  gba: { core: "gba", name: "Game Boy Advance", short: "GBA" },
-  nds: { core: "nds", name: "Nintendo DS", short: "DS" },
-  "3ds": { core: "3ds", name: "Nintendo 3DS", short: "3DS" },
-  cci: { core: "3ds", name: "Nintendo 3DS", short: "3DS" },
-  cxi: { core: "3ds", name: "Nintendo 3DS", short: "3DS" },
-  z64: { core: "n64", name: "Nintendo 64", short: "N64" },
-  n64: { core: "n64", name: "Nintendo 64", short: "N64" },
-  v64: { core: "n64", name: "Nintendo 64", short: "N64" },
-  nes: { core: "nes", name: "NES", short: "NES" },
-  sfc: { core: "snes", name: "Super Nintendo", short: "SNES" },
-  smc: { core: "snes", name: "Super Nintendo", short: "SNES" },
-  cue: { core: "psx", name: "PlayStation", short: "PS1" },
-  bin: { core: "psx", name: "PlayStation", short: "PS1" },
-  iso: { core: "psx", name: "PlayStation", short: "PS1" }
+  gb: { core: "gb", name: "Game Boy", short: "GB", control: "gb" },
+  gbc: { core: "gb", name: "Game Boy Color", short: "GBC", control: "gb" },
+  gba: { core: "gba", name: "Game Boy Advance", short: "GBA", control: "gba" },
+  nds: { core: "nds", name: "Nintendo DS", short: "DS", control: "nds" },
+
+  "3ds": { core: "3ds", name: "Nintendo 3DS", short: "3DS", control: "3ds" },
+  cci: { core: "3ds", name: "Nintendo 3DS", short: "3DS", control: "3ds" },
+  cxi: { core: "3ds", name: "Nintendo 3DS", short: "3DS", control: "3ds" },
+
+  z64: { core: "mupen64plus_next", name: "Nintendo 64", short: "N64", control: "n64" },
+  n64: { core: "mupen64plus_next", name: "Nintendo 64", short: "N64", control: "n64" },
+  v64: { core: "mupen64plus_next", name: "Nintendo 64", short: "N64", control: "n64" },
+
+  nes: { core: "nes", name: "NES", short: "NES", control: "nes" },
+  sfc: { core: "snes", name: "Super Nintendo", short: "SNES", control: "snes" },
+  smc: { core: "snes", name: "Super Nintendo", short: "SNES", control: "snes" },
+
+  cue: { core: "psx", name: "PlayStation", short: "PS1", control: "psx" },
+  bin: { core: "psx", name: "PlayStation", short: "PS1", control: "psx" },
+  iso: { core: "psx", name: "PlayStation", short: "PS1", control: "psx" }
 };
 
 initApp();
@@ -166,7 +170,8 @@ function startGame(file, system) {
   openEmulator({
     gameUrl: romUrl,
     core: system.core,
-    gameName: file.name
+    gameName: file.name,
+    control: system.control
   });
 
   emulatorHolder.scrollIntoView({
@@ -175,7 +180,7 @@ function startGame(file, system) {
   });
 }
 
-function openEmulator({ gameUrl, core, gameName }) {
+function openEmulator({ gameUrl, core, gameName, control }) {
   emulatorHolder.innerHTML = "";
 
   const iframe = document.createElement("iframe");
@@ -184,13 +189,14 @@ function openEmulator({ gameUrl, core, gameName }) {
   iframe.srcdoc = createEmulatorHtml({
     gameUrl,
     core,
-    gameName
+    gameName,
+    control
   });
 
   emulatorHolder.appendChild(iframe);
 }
 
-function createEmulatorHtml({ gameUrl, core, gameName }) {
+function createEmulatorHtml({ gameUrl, core, gameName, control }) {
   return `
     <!DOCTYPE html>
     <html>
@@ -224,6 +230,7 @@ function createEmulatorHtml({ gameUrl, core, gameName }) {
         window.EJS_startOnLoaded = true;
         window.EJS_color = "#ff9da9";
         window.EJS_backgroundColor = "#090909";
+        window.EJS_controlScheme = "${safeJs(control || "n64")}";
       <\/script>
 
       <script src="https://cdn.emulatorjs.org/stable/data/loader.js"><\/script>
@@ -289,6 +296,7 @@ async function saveRomToDB(file, system) {
       core: system.core,
       systemName: system.name,
       short: system.short,
+      control: system.control,
       file,
       savedAt: Date.now()
     };
@@ -454,7 +462,8 @@ async function playSavedRom(id) {
     const system = {
       core: record.core,
       name: record.systemName,
-      short: record.short
+      short: record.short,
+      control: record.control
     };
 
     const file = new File([record.file], record.name, {
