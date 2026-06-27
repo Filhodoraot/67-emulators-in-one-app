@@ -522,6 +522,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
         window.EJS_backgroundColor = "#000000";
         window.EJS_controlScheme = "${safeControl}";
         window.EJS_volume = 0.7;
+        window.EJS_forceLegacyCores = false;
 
         window.EJS_forceLegacyCores = false;
         window.EJS_disableLocalStorage = is3DS;
