@@ -60,7 +60,7 @@ const systemsByExtension = {
   },
 
   "3ds": {
-    core: "3ds",
+    core: "azahar",
     name: "Nintendo 3DS",
     short: "3DS",
     control: "3ds",
@@ -68,7 +68,7 @@ const systemsByExtension = {
   },
 
   cci: {
-    core: "3ds",
+    core: "azahar",
     name: "Nintendo 3DS",
     short: "3DS",
     control: "3ds",
@@ -76,7 +76,7 @@ const systemsByExtension = {
   },
 
   cxi: {
-    core: "3ds",
+    core: "azahar",
     name: "Nintendo 3DS",
     short: "3DS",
     control: "3ds",
@@ -474,6 +474,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
       <script>
         const needsThreads = ${threadsValue};
         const systemName = "${safeSystemName}";
+        const coreName = "${safeCore}";
         const notice = document.getElementById("notice");
 
         function showNotice(message) {
@@ -487,7 +488,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           if (systemName === "Nintendo 3DS") {
             showNotice(
               "<strong>3DS deu erro.</strong><br>" +
-              "Confira se a pasta data está no site e se a ROM está extraída e descriptografada."
+              "Confira se o core azahar está dentro de data/cores e se a ROM está extraída e descriptografada."
             );
           }
         });
@@ -504,7 +505,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
         });
 
         window.EJS_player = "#game";
-        window.EJS_core = "${safeCore}";
+        window.EJS_core = coreName;
         window.EJS_gameName = "${safeGameName}";
         window.EJS_gameUrl = "${safeGameUrl}";
         window.EJS_pathtodata = "/data/";
