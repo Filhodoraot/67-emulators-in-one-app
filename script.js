@@ -260,7 +260,7 @@ async function handleRomFile(file, options = {}) {
   const extension = getExtension(file.name);
 
   if (compressedExtensions.includes(extension)) {
-    showMessage("Esse arquivo está compactado. Extraia primeiro e envie a ROM .3ds, .cci, .cxi, .z64, .n64 ou .v64.");
+    showMessage("Esse arquivo está compactado. Extraia primeiro e envie a ROM certa.");
     return;
   }
 
@@ -312,8 +312,6 @@ function startGame(file, system) {
 }
 
 function openEmulator({ gameUrl, core, gameName, control, systemName, needsThreads }) {
-  forceBigEmulatorScreen();
-
   emulatorHolder.innerHTML = "";
 
   const iframe = document.createElement("iframe");
@@ -323,8 +321,8 @@ function openEmulator({ gameUrl, core, gameName, control, systemName, needsThrea
   iframe.setAttribute("allowfullscreen", "true");
 
   iframe.style.setProperty("width", "100%", "important");
-  iframe.style.setProperty("height", getPlayerHeight(), "important");
-  iframe.style.setProperty("min-height", getPlayerHeight(), "important");
+  iframe.style.setProperty("height", getSmallPlayerHeight(), "important");
+  iframe.style.setProperty("min-height", getSmallPlayerHeight(), "important");
   iframe.style.setProperty("border", "0", "important");
   iframe.style.setProperty("display", "block", "important");
   iframe.style.setProperty("background", "#000", "important");
@@ -340,39 +338,78 @@ function openEmulator({ gameUrl, core, gameName, control, systemName, needsThrea
   });
 
   emulatorHolder.appendChild(iframe);
-  forceBigEmulatorScreen();
+
+  forceSmallPlayerScreen();
+
+  setTimeout(() => {
+    if (window.PlayerModeController) {
+      window.PlayerModeController.setPlayerMode("small", false);
+    } else {
+      forceSmallPlayerScreen();
+    }
+  }, 80);
 }
 
-function forceBigEmulatorScreen() {
-  const playerHeight = getPlayerHeight();
+function forceSmallPlayerScreen() {
+  const height = getSmallPlayerHeight();
   const previewCard = emulatorHolder.closest(".preview-card");
+  const middleGrid = emulatorHolder.closest(".middle-grid");
+  const systemsCard = middleGrid ? middleGrid.querySelector(".systems-card") : null;
+  const iframe = emulatorHolder.querySelector(".emulator-frame");
+
+  if (middleGrid) {
+    middleGrid.style.setProperty("display", "grid", "important");
+    middleGrid.style.setProperty("grid-template-columns", "0.95fr 1.05fr", "important");
+    middleGrid.style.setProperty("gap", "16px", "important");
+    middleGrid.style.setProperty("width", "min(1280px, calc(100% - 70px))", "important");
+  }
+
+  if (systemsCard) {
+    systemsCard.style.setProperty("display", "block", "important");
+  }
 
   if (previewCard) {
     previewCard.classList.add("is-playing");
-    previewCard.style.setProperty("height", playerHeight, "important");
-    previewCard.style.setProperty("min-height", playerHeight, "important");
+    previewCard.style.setProperty("width", "100%", "important");
+    previewCard.style.setProperty("height", height, "important");
+    previewCard.style.setProperty("min-height", height, "important");
+    previewCard.style.setProperty("max-height", "none", "important");
     previewCard.style.setProperty("overflow", "hidden", "important");
     previewCard.style.setProperty("padding", "0", "important");
     previewCard.style.setProperty("background", "#000", "important");
     previewCard.style.setProperty("border", "1px solid #3a3a3a", "important");
-    previewCard.style.setProperty("box-shadow", "0 12px 40px rgba(0, 0, 0, 0.28)", "important");
+    previewCard.style.setProperty("border-radius", "18px", "important");
+    previewCard.style.setProperty("box-shadow", "0 12px 40px rgba(0, 0, 0, 0.35)", "important");
   }
 
   emulatorHolder.style.setProperty("width", "100%", "important");
-  emulatorHolder.style.setProperty("height", playerHeight, "important");
-  emulatorHolder.style.setProperty("min-height", playerHeight, "important");
+  emulatorHolder.style.setProperty("height", height, "important");
+  emulatorHolder.style.setProperty("min-height", height, "important");
+  emulatorHolder.style.setProperty("max-height", "none", "important");
   emulatorHolder.style.setProperty("overflow", "hidden", "important");
-  emulatorHolder.style.setProperty("border-radius", "18px", "important");
-  emulatorHolder.style.setProperty("background", "#000", "important");
   emulatorHolder.style.setProperty("display", "block", "important");
+  emulatorHolder.style.setProperty("background", "#000", "important");
+  emulatorHolder.style.setProperty("border-radius", "18px", "important");
+  emulatorHolder.style.setProperty("position", "relative", "important");
+
+  if (iframe) {
+    iframe.style.setProperty("width", "100%", "important");
+    iframe.style.setProperty("height", height, "important");
+    iframe.style.setProperty("min-height", height, "important");
+    iframe.style.setProperty("max-height", "none", "important");
+    iframe.style.setProperty("display", "block", "important");
+    iframe.style.setProperty("border", "0", "important");
+    iframe.style.setProperty("background", "#000", "important");
+    iframe.style.setProperty("border-radius", "18px", "important");
+  }
 }
 
-function getPlayerHeight() {
+function getSmallPlayerHeight() {
   if (window.innerWidth <= 780) {
-    return "520px";
+    return "330px";
   }
 
-  return "720px";
+  return "420px";
 }
 
 function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, needsThreads }) {
@@ -687,6 +724,7 @@ async function renderSavedRoms() {
     const playButton = document.createElement("button");
     playButton.type = "button";
     playButton.textContent = "Jogar";
+
     playButton.addEventListener("click", async () => {
       await playSavedRom(record.id);
     });
@@ -695,6 +733,7 @@ async function renderSavedRoms() {
     deleteButton.type = "button";
     deleteButton.textContent = "Excluir";
     deleteButton.className = "delete";
+
     deleteButton.addEventListener("click", async () => {
       await deleteSavedRom(record.id);
       await renderSavedRoms();
@@ -785,14 +824,9 @@ function scrollToSaves() {
 }
 
 window.addEventListener("resize", () => {
-  if (emulatorHolder.querySelector(".emulator-frame")) {
-    forceBigEmulatorScreen();
+  const iframe = emulatorHolder.querySelector(".emulator-frame");
 
-    const iframe = emulatorHolder.querySelector(".emulator-frame");
-
-    if (iframe) {
-      iframe.style.setProperty("height", getPlayerHeight(), "important");
-      iframe.style.setProperty("min-height", getPlayerHeight(), "important");
-    }
+  if (iframe && !window.PlayerModeController) {
+    forceSmallPlayerScreen();
   }
 });
