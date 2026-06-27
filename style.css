@@ -908,3 +908,73 @@ label {
 }
   
 }
+/* PLAYER ABERTO, SEM CORTAR A TELA */
+.middle-grid:has(.emulator-frame) {
+  width: min(1280px, calc(100% - 70px)) !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 0 !important;
+}
+
+.middle-grid:has(.emulator-frame) .systems-card {
+  display: none !important;
+}
+
+.middle-grid:has(.emulator-frame) .preview-card,
+.preview-card.is-playing {
+  width: 100% !important;
+  height: 720px !important;
+  min-height: 720px !important;
+  max-height: none !important;
+  grid-column: 1 / -1 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  background: #000 !important;
+  border: 1px solid #3a3a3a !important;
+  border-radius: 18px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35) !important;
+}
+
+.middle-grid:has(.emulator-frame) #emulatorHolder,
+.preview-card.is-playing #emulatorHolder,
+.middle-grid:has(.emulator-frame) .emulator-holder,
+.preview-card.is-playing .emulator-holder {
+  width: 100% !important;
+  height: 720px !important;
+  min-height: 720px !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  display: block !important;
+  background: #000 !important;
+  border-radius: 18px !important;
+}
+
+.middle-grid:has(.emulator-frame) .emulator-frame,
+.preview-card.is-playing .emulator-frame {
+  width: 100% !important;
+  height: 720px !important;
+  min-height: 720px !important;
+  max-height: none !important;
+  display: block !important;
+  border: 0 !important;
+  background: #000 !important;
+  border-radius: 18px !important;
+}
+
+@media (max-width: 780px) {
+  .middle-grid:has(.emulator-frame) {
+    width: calc(100% - 22px) !important;
+  }
+
+  .middle-grid:has(.emulator-frame) .preview-card,
+  .preview-card.is-playing,
+  .middle-grid:has(.emulator-frame) #emulatorHolder,
+  .preview-card.is-playing #emulatorHolder,
+  .middle-grid:has(.emulator-frame) .emulator-holder,
+  .preview-card.is-playing .emulator-holder,
+  .middle-grid:has(.emulator-frame) .emulator-frame,
+  .preview-card.is-playing .emulator-frame {
+    height: 520px !important;
+    min-height: 520px !important;
+  }
+}
