@@ -338,6 +338,7 @@ label {
 
 .systems-card,
 .preview-card {
+  height: 260px;
   min-height: 260px;
   overflow: hidden;
   padding: 0;
@@ -347,7 +348,6 @@ label {
 .card-image-mask {
   width: 100%;
   height: 100%;
-  min-height: 260px;
   overflow: hidden;
   border-radius: 18px;
   background: #0d0d0d;
@@ -356,16 +356,16 @@ label {
 .card-img {
   width: 100%;
   height: 100%;
-  min-height: 260px;
   display: block;
   object-fit: cover;
   object-position: center;
-  transform: scale(1.018);
+  transform: scale(1.015);
   transform-origin: center;
 }
 
 .emulator-holder {
   width: 100%;
+  height: 100%;
   min-height: 260px;
   display: block;
   overflow: hidden;
@@ -749,8 +749,8 @@ label {
   .systems-card,
   .preview-card,
   .card-image-mask,
-  .card-img,
   .emulator-holder {
+    height: 230px;
     min-height: 230px;
   }
 
