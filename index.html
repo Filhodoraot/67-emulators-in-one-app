@@ -6,6 +6,11 @@
 
   <title>67 Emulators in One App</title>
 
+  <!-- Ícone da aba do navegador -->
+  <link rel="icon" type="image/png" href="hero-67.png?v=2" />
+  <link rel="shortcut icon" type="image/png" href="hero-67.png?v=2" />
+  <link rel="apple-touch-icon" href="hero-67.png?v=2" />
+
   <link rel="stylesheet" href="style.css" />
 
   <style>
@@ -118,7 +123,6 @@
           <span class="upload-icon">+</span>
           <strong>Enviar ROM</strong>
           <small>Arraste o arquivo ou clique aqui</small>
-
           <span class="browse-button">Escolher arquivo</span>
 
           <em id="fileInfo">
@@ -222,7 +226,6 @@
   <div class="modal-backdrop hidden" id="saveRomModal">
     <div class="modal">
       <h3>Salvar ROM?</h3>
-
       <p id="saveRomName">Nome da ROM</p>
       <small id="saveRomSize">Sistema e tamanho</small>
 
@@ -272,13 +275,16 @@
         const previewCard = holder.closest(".preview-card");
         const middleGrid = holder.closest(".middle-grid");
         const systemsCard = middleGrid ? middleGrid.querySelector(".systems-card") : null;
-
         const isBig = mode === "big";
         const height = getHeight(mode);
 
         if (middleGrid) {
           middleGrid.style.setProperty("display", "grid", "important");
-          middleGrid.style.setProperty("grid-template-columns", isBig ? "1fr" : "0.95fr 1.05fr", "important");
+          middleGrid.style.setProperty(
+            "grid-template-columns",
+            isBig ? "1fr" : "0.95fr 1.05fr",
+            "important"
+          );
           middleGrid.style.setProperty("gap", isBig ? "0" : "16px", "important");
           middleGrid.style.setProperty("width", "min(1280px, calc(100% - 70px))", "important");
         }
@@ -345,7 +351,6 @@
         smallButton.type = "button";
         smallButton.textContent = "Telinha";
         smallButton.dataset.mode = "small";
-
         smallButton.onclick = function () {
           setPlayerMode("small", false);
         };
@@ -354,7 +359,6 @@
         bigButton.type = "button";
         bigButton.textContent = "Tela grande";
         bigButton.dataset.mode = "big";
-
         bigButton.onclick = function () {
           setPlayerMode("big", false);
         };
@@ -363,7 +367,6 @@
         fullButton.type = "button";
         fullButton.textContent = "Tela cheia";
         fullButton.dataset.mode = "fullscreen";
-
         fullButton.onclick = function () {
           setPlayerMode("big", true);
         };
