@@ -278,12 +278,18 @@ async function handleRomFile(file, options = {}) {
 
   startGame(file, system);
 
-  if (options.askToSave && getStorageConsent() === "accepted") {
+  const isHeavy3DS = system.core === "azahar";
+
+  if (options.askToSave && getStorageConsent() === "accepted" && !isHeavy3DS) {
     const alreadySaved = await isRomSaved(file);
 
     if (!alreadySaved) {
       openSaveModal(file, system);
     }
+  }
+
+  if (isHeavy3DS) {
+    showMessage(`ROM detectada: ${file.name} · Nintendo 3DS experimental. Pode demorar 1 a 3 minutos.`);
   }
 }
 
@@ -419,6 +425,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
   const safeControl = safeJs(control || core);
   const safeSystemName = safeJs(systemName || core);
   const threadsValue = needsThreads ? "true" : "false";
+  const is3DS = safeCore === "azahar" ? "true" : "false";
 
   return `
     <!DOCTYPE html>
@@ -473,6 +480,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
 
       <script>
         const needsThreads = ${threadsValue};
+        const is3DS = ${is3DS};
         const systemName = "${safeSystemName}";
         const coreName = "${safeCore}";
         const notice = document.getElementById("notice");
@@ -485,10 +493,10 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
         window.addEventListener("error", function(event) {
           console.error(event.error || event.message);
 
-          if (systemName === "Nintendo 3DS") {
+          if (is3DS) {
             showNotice(
               "<strong>3DS deu erro.</strong><br>" +
-              "Confira se o core azahar está dentro de data/cores e se a ROM está extraída e descriptografada."
+              "Confira se existe /data/cores/azahar-thread-wasm.data e se a ROM está extraída e descriptografada."
             );
           }
         });
@@ -496,7 +504,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
         window.addEventListener("unhandledrejection", function(event) {
           console.error(event.reason);
 
-          if (systemName === "Nintendo 3DS") {
+          if (is3DS) {
             showNotice(
               "<strong>3DS não iniciou.</strong><br>" +
               "Use .3ds, .cci ou .cxi extraído. Se for .cia, .7z ou criptografado, pode falhar."
@@ -515,11 +523,15 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
         window.EJS_controlScheme = "${safeControl}";
         window.EJS_volume = 0.7;
 
+        window.EJS_forceLegacyCores = false;
+        window.EJS_disableLocalStorage = is3DS;
+        window.EJS_disableDatabases = is3DS;
+
         if (needsThreads) {
           window.EJS_threads = true;
         }
 
-        if (systemName === "Nintendo 3DS") {
+        if (is3DS) {
           setTimeout(function() {
             if (typeof SharedArrayBuffer === "undefined") {
               showNotice(
@@ -759,12 +771,18 @@ async function playSavedRom(id) {
       return;
     }
 
+    let fixedCore = record.core;
+
+    if (fixedCore === "3ds") {
+      fixedCore = "azahar";
+    }
+
     const system = {
-      core: record.core,
+      core: fixedCore,
       name: record.systemName,
       short: record.short,
       control: record.control,
-      needsThreads: record.needsThreads || false
+      needsThreads: record.needsThreads || fixedCore === "azahar"
     };
 
     const file = new File([record.file], record.name, {
