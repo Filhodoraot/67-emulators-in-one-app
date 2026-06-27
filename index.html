@@ -9,33 +9,205 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="app">
-    <section class="card">
-      <h1>🎮 67 Emulators in One App</h1>
-      <p>Coloque sua ROM e o site escolhe o emulador certo.</p>
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="#">
+        <img
+          src="logo-rato.png"
+          class="brand-rat"
+          alt="Logo rato"
+        />
 
-      <label class="upload-box" for="romInput">
-        <span>Arraste ou escolha sua ROM</span>
-        <small>.gba, .gb, .gbc, .nes, .sfc, .smc, .nds</small>
-      </label>
+        <span>67 Emulators in One App</span>
+      </a>
 
-      <input id="romInput" type="file" accept=".gba,.gb,.gbc,.nes,.sfc,.smc,.nds,.zip" />
+      <div class="top-actions">
+        <button class="top-button ghost" type="button" onclick="scrollToSaves()">
+          Meus Saves
+        </button>
 
-      <div id="info" class="info">
-        Nenhuma ROM carregada.
+        <button class="top-button start" type="button" onclick="scrollToUpload()">
+          Começar
+        </button>
       </div>
+    </header>
 
-      <button id="playButton" disabled>Jogar</button>
+    <main class="main-content">
+      <section class="hero">
+        <div class="hero-67-wrap">
+          <img
+            src="hero-67.png"
+            class="hero-67"
+            alt="67 em estilo rato"
+          />
+        </div>
 
-      <p class="warning">
-        No games included. Use your own ROM files.
+        <div class="hero-text-wrap">
+          <img
+            src="hero-texto.png"
+            class="hero-text-img"
+            alt="Emuladores em um app"
+          />
+        </div>
+      </section>
+
+      <section id="uploadZone" class="upload-zone">
+        <img
+          src="consoles-esquerda.png"
+          class="upload-consoles upload-consoles-left"
+          alt="Consoles clássicos"
+        />
+
+        <img
+          src="consoles-direita.png"
+          class="upload-consoles upload-consoles-right"
+          alt="Consoles Nintendo DS, 3DS e 64"
+        />
+
+        <input
+          id="romInput"
+          type="file"
+          accept=".gb,.gbc,.gba,.nds,.3ds,.cci,.cxi,.z64,.n64,.v64,.nes,.sfc,.smc,.cue,.bin,.iso"
+        />
+
+        <label class="upload-card" for="romInput">
+          <span class="upload-icon">↑</span>
+
+          <strong>Envie sua ROM</strong>
+          <small>ou arraste e solte aqui</small>
+
+          <span class="browse-button">Escolher arquivo</span>
+
+          <em id="fileInfo">
+            Seus arquivos nunca são enviados. Tudo fica no navegador.
+          </em>
+        </label>
+      </section>
+
+      <section class="middle-grid">
+        <article class="systems-card">
+          <img
+            src="card-sistemas.png"
+            class="systems-img"
+            alt="Sistemas suportados"
+          />
+        </article>
+
+        <article class="preview-card">
+          <div id="emulatorHolder" class="emulator-holder">
+            <img
+              src="card-preview.png"
+              class="preview-img"
+              alt="Prévia do emulador"
+            />
+          </div>
+        </article>
+      </section>
+
+      <section id="savesPanel" class="saves-panel">
+        <div class="panel-title">
+          <h2>Meus Saves</h2>
+          <p>ROMs salvas localmente neste navegador.</p>
+        </div>
+
+        <div id="savesList" class="saves-list"></div>
+
+        <div id="savesEmpty" class="empty-saves">
+          <img
+            src="rato-esquerdo.png"
+            class="empty-rat"
+            alt="Rato"
+          />
+
+          <strong>Nenhuma ROM salva ainda</strong>
+          <small>Aceite o armazenamento local e salve uma ROM.</small>
+        </div>
+      </section>
+
+      <section class="features-strip">
+        <div class="feature-item">
+          <span class="feature-icon bolt"></span>
+          <div>
+            <h3>Jogue na hora</h3>
+            <p>Sem instalar. Sem espera. Jogue em segundos.</p>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <span class="feature-icon shield"></span>
+          <div>
+            <h3>100% Seguro</h3>
+            <p>Roda no navegador. Nada é enviado.</p>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <span class="feature-icon monitor"></span>
+          <div>
+            <h3>67 Sistemas</h3>
+            <p>Todos os seus favoritos. Um app simples.</p>
+          </div>
+        </div>
+
+        <div class="feature-item rat-feature">
+          <div>
+            <h3>Feito com carinho</h3>
+            <p>Feito para gamers, por gamers.</p>
+          </div>
+
+          <img
+            src="rato-direito.png"
+            class="feature-rat"
+            alt="Rato dormindo"
+          />
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>© 2026 67 Emulators in One App. Todos os direitos reservados.</span>
+      <span>Política de Privacidade</span>
+      <span>Termos de Uso</span>
+    </footer>
+  </div>
+
+  <div id="cookieBanner" class="cookie-banner">
+    <div>
+      <strong>Armazenamento local</strong>
+      <p>
+        Este site pode salvar ROMs localmente no seu navegador usando IndexedDB.
+        Nada é enviado para um servidor.
       </p>
-    </section>
+    </div>
 
-    <section class="emulator-area">
-      <iframe id="emulatorFrame" title="67 Emulators in One App"></iframe>
-    </section>
-  </main>
+    <div class="cookie-actions">
+      <button id="declineStorage" type="button" class="small-button ghost">
+        Não
+      </button>
+
+      <button id="acceptStorage" type="button" class="small-button">
+        Aceitar
+      </button>
+    </div>
+  </div>
+
+  <div id="saveRomModal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h3>Salvar esta ROM?</h3>
+      <p id="saveRomName">ROM</p>
+      <small id="saveRomSize">Tamanho</small>
+
+      <div class="modal-actions">
+        <button id="saveRomNo" type="button" class="small-button ghost">
+          Só jogar agora
+        </button>
+
+        <button id="saveRomYes" type="button" class="small-button">
+          Salvar localmente
+        </button>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
