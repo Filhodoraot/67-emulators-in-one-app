@@ -54,7 +54,7 @@ label {
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
-  opacity: 0.22;
+  opacity: 0.18;
   pointer-events: none;
 }
 
@@ -155,7 +155,7 @@ label {
   display: block;
   object-fit: contain;
   filter: drop-shadow(0 18px 20px rgba(0, 0, 0, 0.45));
-  transition: 0.22s ease;
+  transition: transform 0.22s ease;
 }
 
 .hero-67:hover {
@@ -216,34 +216,42 @@ label {
   display: none;
 }
 
-.upload-consoles {
+.console-hotspot {
   position: absolute;
-  z-index: 2;
-  object-fit: contain;
-  pointer-events: auto;
+  z-index: 3;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
   cursor: pointer;
-  filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.5));
+  display: block;
   transition: transform 0.22s ease, filter 0.22s ease;
 }
 
-.upload-consoles:hover {
-  transform: scale(1.14);
-  z-index: 8;
-  filter: drop-shadow(0 24px 30px rgba(0, 0, 0, 0.7));
-}
-
-.upload-consoles-left {
+.console-hotspot-left {
   width: 340px;
   left: 48px;
   top: 46px;
-  transform-origin: center;
 }
 
-.upload-consoles-right {
+.console-hotspot-right {
   width: 340px;
   right: 58px;
   top: 44px;
-  transform-origin: center;
+}
+
+.upload-consoles {
+  width: 100%;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.5));
+}
+
+.console-hotspot:hover {
+  transform: scale(1.14);
+  z-index: 10;
+  filter: drop-shadow(0 24px 30px rgba(0, 0, 0, 0.7));
 }
 
 .upload-card {
@@ -339,71 +347,375 @@ label {
 .preview-card {
   min-height: 260px;
   overflow: hidden;
+  padding: 24px 28px;
   position: relative;
-  display: block;
-  background: #0d0d0d;
 }
 
-/* agora as imagens bugadas viram background e ficam cortadas por dentro */
-.systems-card::before,
-.preview-card::before {
+.systems-card h2,
+.preview-card h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 1000;
+  color: #eeeeee;
+}
+
+.pink-line {
+  display: block;
+  width: 34px;
+  height: 3px;
+  margin-top: 9px;
+  background: var(--pink);
+  border-radius: 999px;
+}
+
+.systems-list {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.system-item {
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.system-item:hover {
+  transform: translateY(-6px) scale(1.08);
+}
+
+.system-item p {
+  margin: 12px 0 0;
+  color: #cfcfcf;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.system-icon {
+  height: 58px;
+  margin: 0 auto;
+  position: relative;
+  filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.45));
+}
+
+.gb-icon {
+  width: 42px;
+  border-radius: 7px;
+  background: linear-gradient(145deg, #9a9a9a, #565656);
+  border: 2px solid #222;
+}
+
+.gb-icon::before {
   content: "";
   position: absolute;
-  inset: -18px;
-  z-index: 1;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: cover;
-  transition: transform 0.22s ease, filter 0.22s ease;
+  left: 8px;
+  top: 7px;
+  width: 24px;
+  height: 20px;
+  border-radius: 3px;
+  background: #1a1a1a;
 }
 
-.systems-card::before {
-  background-image: url("card-sistemas.png");
+.gb-icon::after {
+  content: "";
+  position: absolute;
+  left: 9px;
+  bottom: 12px;
+  width: 12px;
+  height: 12px;
+  background: #171717;
+  clip-path: polygon(35% 0, 65% 0, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 65% 100%, 35% 100%, 35% 65%, 0 65%, 0 35%, 35% 35%);
 }
 
-.preview-card::before {
-  background-image: url("card-preview.png");
+.gba-icon {
+  width: 72px;
+  height: 42px;
+  margin-top: 10px;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #9a9a9a, #545454);
+  border: 2px solid #222;
 }
 
-/* esconde o img antigo do HTML */
-.systems-img,
-.preview-img {
-  display: none;
+.gba-icon::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  top: 8px;
+  width: 29px;
+  height: 20px;
+  border-radius: 4px;
+  background: #151515;
 }
 
-/* hover nos cards */
-.systems-card:hover::before,
-.preview-card:hover::before {
-  transform: scale(1.06);
-  filter: brightness(1.08);
+.gba-icon::after {
+  content: "";
+  position: absolute;
+  right: 9px;
+  top: 16px;
+  width: 8px;
+  height: 8px;
+  background: var(--pink);
+  border-radius: 50%;
+}
+
+.ds-icon {
+  width: 54px;
+  height: 58px;
+}
+
+.ds-icon::before,
+.ds-icon::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  width: 48px;
+  height: 25px;
+  border-radius: 4px;
+  background: linear-gradient(145deg, #999, #565656);
+  border: 2px solid #202020;
+}
+
+.ds-icon::before {
+  top: 0;
+}
+
+.ds-icon::after {
+  bottom: 0;
+}
+
+.ds-icon.dark::before,
+.ds-icon.dark::after {
+  background: linear-gradient(145deg, #555, #242424);
+}
+
+.n64-icon {
+  width: 70px;
+  height: 50px;
+  margin-top: 8px;
+}
+
+.n64-icon::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 8px;
+  width: 56px;
+  height: 32px;
+  border-radius: 40% 40% 45% 45%;
+  background: linear-gradient(145deg, #9b9b9b, #555);
+  border: 2px solid #202020;
+}
+
+.n64-icon::after {
+  content: "";
+  position: absolute;
+  left: 29px;
+  top: 19px;
+  width: 12px;
+  height: 12px;
+  background: #202020;
+  border-radius: 50%;
+}
+
+.systems-button {
+  width: min(320px, 100%);
+  margin: 28px auto 0;
+  padding: 13px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  border: 1px solid #404040;
+  border-radius: 14px;
+  color: #eeeeee;
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.systems-button span {
+  font-size: 28px;
+  line-height: 0;
+}
+
+.systems-button:hover {
+  border-color: var(--pink);
+}
+
+.preview-card {
+  padding-bottom: 18px;
 }
 
 .emulator-holder {
+  margin-top: 18px;
   width: 100%;
-  min-height: 260px;
+  min-height: 170px;
+  display: block;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #050505;
+}
+
+.fake-emulator {
+  min-height: 170px;
+  display: grid;
+  grid-template-columns: 72px 1fr 220px;
+  border: 1px solid #333;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #111;
+}
+
+.fake-leftbar {
   display: grid;
   place-items: center;
-  overflow: hidden;
-  border-radius: 18px;
-  background: #050505;
+  gap: 10px;
+  padding: 14px 0;
+  border-right: 1px solid #333;
 }
 
-.preview-card .emulator-holder {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background: transparent;
-  pointer-events: none;
+.tiny-rat {
+  width: 38px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #303030;
+  border-radius: 10px;
+  background: #1b1b1b;
 }
 
-.preview-card .emulator-holder:has(.emulator-frame) {
-  pointer-events: auto;
-  background: #050505;
+.fake-leftbar span {
+  padding: 7px 14px;
+  border: 1px solid #333;
+  border-radius: 999px;
+  color: #dddddd;
+  font-size: 12px;
 }
 
-.preview-card .emulator-frame {
+.fake-screen {
+  display: grid;
+  place-items: center;
+  background: #000000;
+}
+
+.fake-player {
+  width: 78%;
+  height: 100%;
   position: relative;
-  z-index: 5;
+  background:
+    radial-gradient(circle at 20% 20%, #777 0 4px, transparent 5px),
+    radial-gradient(circle at 34% 18%, #777 0 4px, transparent 5px),
+    radial-gradient(circle at 48% 20%, #777 0 4px, transparent 5px),
+    linear-gradient(90deg, transparent 0 55%, rgba(0, 0, 0, 0.16) 55% 65%, transparent 65%),
+    repeating-linear-gradient(45deg, #dddddd 0 4px, #c5c5c5 4px 8px);
+  image-rendering: pixelated;
+}
+
+.fake-player::before {
+  content: "";
+  position: absolute;
+  left: 48%;
+  top: 48%;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: #111;
+  box-shadow: 0 12px 0 #333;
+}
+
+.fake-controls {
+  position: relative;
+  border-left: 1px solid #333;
+  background: linear-gradient(145deg, #171717, #0d0d0d);
+}
+
+.fake-top-icons {
+  height: 48px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  align-items: center;
+  border-bottom: 1px solid #333;
+  color: #eeeeee;
+}
+
+.fake-dpad {
+  position: absolute;
+  left: 28px;
+  top: 76px;
+  width: 70px;
+  height: 70px;
+}
+
+.fake-dpad::before,
+.fake-dpad::after {
+  content: "";
+  position: absolute;
+  background: #2a2a2a;
+  border: 2px solid #111;
+  border-radius: 8px;
+}
+
+.fake-dpad::before {
+  width: 70px;
+  height: 24px;
+  left: 0;
+  top: 23px;
+}
+
+.fake-dpad::after {
+  width: 24px;
+  height: 70px;
+  left: 23px;
+  top: 0;
+}
+
+.fake-a,
+.fake-b {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #050505;
+  background: #242424;
+  color: var(--pink);
+  font-size: 22px;
+  font-weight: 1000;
+}
+
+.fake-a {
+  right: 28px;
+  top: 76px;
+}
+
+.fake-b {
+  right: 76px;
+  top: 122px;
+}
+
+.fake-small-buttons {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.fake-small-buttons span {
+  padding: 8px 12px;
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: #bbbbbb;
+  font-size: 11px;
+}
+
+.fake-caption {
+  margin: 10px 0 0;
+  color: #a9a9a9;
+  font-size: 14px;
 }
 
 .emulator-frame {
@@ -712,8 +1024,8 @@ label {
     border-bottom: 0;
   }
 
-  .upload-consoles {
-    opacity: 0.45;
+  .console-hotspot {
+    opacity: 0.5;
   }
 }
 
@@ -767,7 +1079,7 @@ label {
     min-height: 340px;
   }
 
-  .upload-consoles {
+  .console-hotspot {
     display: none;
   }
 
@@ -782,6 +1094,18 @@ label {
   .systems-card,
   .preview-card {
     min-height: 230px;
+  }
+
+  .systems-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fake-emulator {
+    grid-template-columns: 52px 1fr;
+  }
+
+  .fake-controls {
+    display: none;
   }
 
   .save-item {
