@@ -24,27 +24,136 @@ const CONSENT_KEY = "sixtySevenEmulatorsStorageConsent";
 let romUrl = null;
 let pendingSave = null;
 
+const compressedExtensions = ["7z", "zip", "rar"];
+
 const systemsByExtension = {
-  gb: { core: "gb", name: "Game Boy", short: "GB", control: "gb" },
-  gbc: { core: "gb", name: "Game Boy Color", short: "GBC", control: "gb" },
-  gba: { core: "gba", name: "Game Boy Advance", short: "GBA", control: "gba" },
-  nds: { core: "nds", name: "Nintendo DS", short: "DS", control: "nds" },
+  gb: {
+    core: "gb",
+    name: "Game Boy",
+    short: "GB",
+    control: "gb",
+    needsThreads: false
+  },
 
-  "3ds": { core: "3ds", name: "Nintendo 3DS", short: "3DS", control: "3ds" },
-  cci: { core: "3ds", name: "Nintendo 3DS", short: "3DS", control: "3ds" },
-  cxi: { core: "3ds", name: "Nintendo 3DS", short: "3DS", control: "3ds" },
+  gbc: {
+    core: "gb",
+    name: "Game Boy Color",
+    short: "GBC",
+    control: "gb",
+    needsThreads: false
+  },
 
-  z64: { core: "mupen64plus_next", name: "Nintendo 64", short: "N64", control: "n64" },
-  n64: { core: "mupen64plus_next", name: "Nintendo 64", short: "N64", control: "n64" },
-  v64: { core: "mupen64plus_next", name: "Nintendo 64", short: "N64", control: "n64" },
+  gba: {
+    core: "gba",
+    name: "Game Boy Advance",
+    short: "GBA",
+    control: "gba",
+    needsThreads: false
+  },
 
-  nes: { core: "nes", name: "NES", short: "NES", control: "nes" },
-  sfc: { core: "snes", name: "Super Nintendo", short: "SNES", control: "snes" },
-  smc: { core: "snes", name: "Super Nintendo", short: "SNES", control: "snes" },
+  nds: {
+    core: "nds",
+    name: "Nintendo DS",
+    short: "DS",
+    control: "nds",
+    needsThreads: false
+  },
 
-  cue: { core: "psx", name: "PlayStation", short: "PS1", control: "psx" },
-  bin: { core: "psx", name: "PlayStation", short: "PS1", control: "psx" },
-  iso: { core: "psx", name: "PlayStation", short: "PS1", control: "psx" }
+  "3ds": {
+    core: "3ds",
+    name: "Nintendo 3DS",
+    short: "3DS",
+    control: "3ds",
+    needsThreads: true
+  },
+
+  cci: {
+    core: "3ds",
+    name: "Nintendo 3DS",
+    short: "3DS",
+    control: "3ds",
+    needsThreads: true
+  },
+
+  cxi: {
+    core: "3ds",
+    name: "Nintendo 3DS",
+    short: "3DS",
+    control: "3ds",
+    needsThreads: true
+  },
+
+  z64: {
+    core: "n64",
+    name: "Nintendo 64",
+    short: "N64",
+    control: "n64",
+    needsThreads: false
+  },
+
+  n64: {
+    core: "n64",
+    name: "Nintendo 64",
+    short: "N64",
+    control: "n64",
+    needsThreads: false
+  },
+
+  v64: {
+    core: "n64",
+    name: "Nintendo 64",
+    short: "N64",
+    control: "n64",
+    needsThreads: false
+  },
+
+  nes: {
+    core: "nes",
+    name: "NES",
+    short: "NES",
+    control: "nes",
+    needsThreads: false
+  },
+
+  sfc: {
+    core: "snes",
+    name: "Super Nintendo",
+    short: "SNES",
+    control: "snes",
+    needsThreads: false
+  },
+
+  smc: {
+    core: "snes",
+    name: "Super Nintendo",
+    short: "SNES",
+    control: "snes",
+    needsThreads: false
+  },
+
+  cue: {
+    core: "psx",
+    name: "PlayStation",
+    short: "PS1",
+    control: "psx",
+    needsThreads: false
+  },
+
+  bin: {
+    core: "psx",
+    name: "PlayStation",
+    short: "PS1",
+    control: "psx",
+    needsThreads: false
+  },
+
+  iso: {
+    core: "psx",
+    name: "PlayStation",
+    short: "PS1",
+    control: "psx",
+    needsThreads: false
+  }
 };
 
 initApp();
@@ -64,19 +173,28 @@ uploadZone.addEventListener("dragover", (event) => {
   event.preventDefault();
 
   const card = document.querySelector(".upload-card");
-  card.classList.add("dragover");
+
+  if (card) {
+    card.classList.add("dragover");
+  }
 });
 
 uploadZone.addEventListener("dragleave", () => {
   const card = document.querySelector(".upload-card");
-  card.classList.remove("dragover");
+
+  if (card) {
+    card.classList.remove("dragover");
+  }
 });
 
 uploadZone.addEventListener("drop", (event) => {
   event.preventDefault();
 
   const card = document.querySelector(".upload-card");
-  card.classList.remove("dragover");
+
+  if (card) {
+    card.classList.remove("dragover");
+  }
 
   const file = event.dataTransfer.files[0];
 
@@ -140,6 +258,17 @@ async function initApp() {
 
 async function handleRomFile(file, options = {}) {
   const extension = getExtension(file.name);
+
+  if (compressedExtensions.includes(extension)) {
+    showMessage("Esse arquivo está compactado. Extraia primeiro e envie a ROM .3ds, .cci, .cxi, .z64, .n64 ou .v64.");
+    return;
+  }
+
+  if (extension === "cia") {
+    showMessage("Arquivo .cia não é ideal no navegador. Use .3ds, .cci ou .cxi descriptografado.");
+    return;
+  }
+
   const system = systemsByExtension[extension];
 
   if (!system) {
@@ -171,7 +300,9 @@ function startGame(file, system) {
     gameUrl: romUrl,
     core: system.core,
     gameName: file.name,
-    control: system.control
+    control: system.control,
+    systemName: system.name,
+    needsThreads: system.needsThreads
   });
 
   emulatorHolder.scrollIntoView({
@@ -180,57 +311,188 @@ function startGame(file, system) {
   });
 }
 
-function openEmulator({ gameUrl, core, gameName, control }) {
+function openEmulator({ gameUrl, core, gameName, control, systemName, needsThreads }) {
+  forceBigEmulatorScreen();
+
   emulatorHolder.innerHTML = "";
 
   const iframe = document.createElement("iframe");
   iframe.className = "emulator-frame";
   iframe.title = "Emulator Player";
+  iframe.allow = "gamepad; fullscreen";
+  iframe.setAttribute("allowfullscreen", "true");
+
+  iframe.style.setProperty("width", "100%", "important");
+  iframe.style.setProperty("height", getPlayerHeight(), "important");
+  iframe.style.setProperty("min-height", getPlayerHeight(), "important");
+  iframe.style.setProperty("border", "0", "important");
+  iframe.style.setProperty("display", "block", "important");
+  iframe.style.setProperty("background", "#000", "important");
+  iframe.style.setProperty("border-radius", "18px", "important");
+
   iframe.srcdoc = createEmulatorHtml({
     gameUrl,
     core,
     gameName,
-    control
+    control,
+    systemName,
+    needsThreads
   });
 
   emulatorHolder.appendChild(iframe);
+  forceBigEmulatorScreen();
 }
 
-function createEmulatorHtml({ gameUrl, core, gameName, control }) {
+function forceBigEmulatorScreen() {
+  const playerHeight = getPlayerHeight();
+  const previewCard = emulatorHolder.closest(".preview-card");
+
+  if (previewCard) {
+    previewCard.classList.add("is-playing");
+    previewCard.style.setProperty("height", playerHeight, "important");
+    previewCard.style.setProperty("min-height", playerHeight, "important");
+    previewCard.style.setProperty("overflow", "hidden", "important");
+    previewCard.style.setProperty("padding", "0", "important");
+    previewCard.style.setProperty("background", "#000", "important");
+    previewCard.style.setProperty("border", "1px solid #3a3a3a", "important");
+    previewCard.style.setProperty("box-shadow", "0 12px 40px rgba(0, 0, 0, 0.28)", "important");
+  }
+
+  emulatorHolder.style.setProperty("width", "100%", "important");
+  emulatorHolder.style.setProperty("height", playerHeight, "important");
+  emulatorHolder.style.setProperty("min-height", playerHeight, "important");
+  emulatorHolder.style.setProperty("overflow", "hidden", "important");
+  emulatorHolder.style.setProperty("border-radius", "18px", "important");
+  emulatorHolder.style.setProperty("background", "#000", "important");
+  emulatorHolder.style.setProperty("display", "block", "important");
+}
+
+function getPlayerHeight() {
+  if (window.innerWidth <= 780) {
+    return "520px";
+  }
+
+  return "720px";
+}
+
+function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, needsThreads }) {
+  const safeCore = safeJs(core);
+  const safeGameName = safeJs(gameName);
+  const safeGameUrl = safeJs(gameUrl);
+  const safeControl = safeJs(control || core);
+  const safeSystemName = safeJs(systemName || core);
+  const threadsValue = needsThreads ? "true" : "false";
+
   return `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
       <style>
-        html, body {
+        html,
+        body {
           width: 100%;
           height: 100%;
           margin: 0;
           padding: 0;
           background: #000;
           overflow: hidden;
+          font-family: Arial, Helvetica, sans-serif;
         }
 
         #game {
           width: 100%;
           height: 100%;
+          background: #000;
+        }
+
+        #notice {
+          position: fixed;
+          left: 12px;
+          right: 12px;
+          bottom: 12px;
+          z-index: 999999;
+          display: none;
+          padding: 12px 14px;
+          border: 1px solid #ff9da9;
+          border-radius: 12px;
+          color: #fff;
+          background: rgba(10, 10, 10, 0.92);
+          font-size: 13px;
+          line-height: 1.35;
+        }
+
+        #notice strong {
+          color: #ffb8c1;
         }
       </style>
     </head>
+
     <body>
       <div id="game"></div>
+      <div id="notice"></div>
 
       <script>
+        const needsThreads = ${threadsValue};
+        const systemName = "${safeSystemName}";
+        const notice = document.getElementById("notice");
+
+        function showNotice(message) {
+          notice.innerHTML = message;
+          notice.style.display = "block";
+        }
+
+        window.addEventListener("error", function(event) {
+          console.error(event.error || event.message);
+
+          if (systemName === "Nintendo 3DS") {
+            showNotice(
+              "<strong>3DS deu erro.</strong><br>" +
+              "Se aparecer erro de SharedArrayBuffer, precisa rodar o site com COOP/COEP. " +
+              "Também confira se a ROM está extraída e descriptografada."
+            );
+          }
+        });
+
+        window.addEventListener("unhandledrejection", function(event) {
+          console.error(event.reason);
+
+          if (systemName === "Nintendo 3DS") {
+            showNotice(
+              "<strong>3DS não iniciou.</strong><br>" +
+              "Tenta uma ROM .3ds, .cci ou .cxi extraída. Se for .cia, .7z ou criptografada, pode falhar."
+            );
+          }
+        });
+
         window.EJS_player = "#game";
-        window.EJS_core = "${safeJs(core)}";
-        window.EJS_gameName = "${safeJs(gameName)}";
-        window.EJS_gameUrl = "${safeJs(gameUrl)}";
+        window.EJS_core = "${safeCore}";
+        window.EJS_gameName = "${safeGameName}";
+        window.EJS_gameUrl = "${safeGameUrl}";
         window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
         window.EJS_startOnLoaded = true;
         window.EJS_color = "#ff9da9";
-        window.EJS_backgroundColor = "#090909";
-        window.EJS_controlScheme = "${safeJs(control || "n64")}";
+        window.EJS_backgroundColor = "#000000";
+        window.EJS_controlScheme = "${safeControl}";
+        window.EJS_volume = 0.7;
+
+        if (needsThreads) {
+          window.EJS_threads = true;
+        }
+
+        if (systemName === "Nintendo 3DS") {
+          setTimeout(function() {
+            if (typeof SharedArrayBuffer === "undefined") {
+              showNotice(
+                "<strong>Aviso do 3DS:</strong><br>" +
+                "Seu navegador/servidor não liberou SharedArrayBuffer. " +
+                "No localhost comum pode não abrir. Hospedar com COOP/COEP ajuda."
+              );
+            }
+          }, 700);
+        }
       <\/script>
 
       <script src="https://cdn.emulatorjs.org/stable/data/loader.js"><\/script>
@@ -272,7 +534,6 @@ function openDB() {
 
       if (!db.objectStoreNames.contains(ROM_STORE)) {
         const store = db.createObjectStore(ROM_STORE, { keyPath: "id" });
-
         store.createIndex("savedAt", "savedAt", { unique: false });
       }
     };
@@ -297,6 +558,7 @@ async function saveRomToDB(file, system) {
       systemName: system.name,
       short: system.short,
       control: system.control,
+      needsThreads: system.needsThreads,
       file,
       savedAt: Date.now()
     };
@@ -463,7 +725,8 @@ async function playSavedRom(id) {
       core: record.core,
       name: record.systemName,
       short: record.short,
-      control: record.control
+      control: record.control,
+      needsThreads: record.needsThreads || false
     };
 
     const file = new File([record.file], record.name, {
@@ -491,7 +754,8 @@ function safeJs(value) {
     .replaceAll("\\", "\\\\")
     .replaceAll('"', '\\"')
     .replaceAll("'", "\\'")
-    .replaceAll("\n", " ");
+    .replaceAll("\n", " ")
+    .replaceAll("\r", " ");
 }
 
 function formatBytes(bytes) {
@@ -519,3 +783,16 @@ function scrollToSaves() {
     block: "center"
   });
 }
+
+window.addEventListener("resize", () => {
+  if (emulatorHolder.querySelector(".emulator-frame")) {
+    forceBigEmulatorScreen();
+
+    const iframe = emulatorHolder.querySelector(".emulator-frame");
+
+    if (iframe) {
+      iframe.style.setProperty("height", getPlayerHeight(), "important");
+      iframe.style.setProperty("min-height", getPlayerHeight(), "important");
+    }
+  }
+});
