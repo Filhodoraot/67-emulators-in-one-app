@@ -487,8 +487,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           if (systemName === "Nintendo 3DS") {
             showNotice(
               "<strong>3DS deu erro.</strong><br>" +
-              "Se aparecer erro de SharedArrayBuffer, precisa rodar o site com COOP/COEP. " +
-              "Também confira se a ROM está extraída e descriptografada."
+              "Confira se a pasta data está no site e se a ROM está extraída e descriptografada."
             );
           }
         });
@@ -499,7 +498,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           if (systemName === "Nintendo 3DS") {
             showNotice(
               "<strong>3DS não iniciou.</strong><br>" +
-              "Tenta uma ROM .3ds, .cci ou .cxi extraída. Se for .cia, .7z ou criptografada, pode falhar."
+              "Use .3ds, .cci ou .cxi extraído. Se for .cia, .7z ou criptografado, pode falhar."
             );
           }
         });
@@ -508,7 +507,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
         window.EJS_core = "${safeCore}";
         window.EJS_gameName = "${safeGameName}";
         window.EJS_gameUrl = "${safeGameUrl}";
-        window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
+        window.EJS_pathtodata = "/data/";
         window.EJS_startOnLoaded = true;
         window.EJS_color = "#ff9da9";
         window.EJS_backgroundColor = "#000000";
@@ -524,15 +523,14 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
             if (typeof SharedArrayBuffer === "undefined") {
               showNotice(
                 "<strong>Aviso do 3DS:</strong><br>" +
-                "Seu navegador/servidor não liberou SharedArrayBuffer. " +
-                "No localhost comum pode não abrir. Hospedar com COOP/COEP ajuda."
+                "SharedArrayBuffer ainda está bloqueado. Confira o netlify.toml e faça Clear cache and deploy."
               );
             }
           }, 700);
         }
       <\/script>
 
-      <script src="https://cdn.emulatorjs.org/stable/data/loader.js"><\/script>
+      <script src="/data/loader.js"><\/script>
     </body>
     </html>
   `;
