@@ -7,12 +7,67 @@
   <title>67 Emulators in One App</title>
 
   <link rel="stylesheet" href="style.css" />
+
+  <style>
+    #emulatorHolder {
+      position: relative !important;
+    }
+
+    #playerModeToolbar {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 999999;
+      display: flex;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    #playerModeToolbar button {
+      border: 1px solid #555;
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: rgba(15, 15, 15, 0.88);
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    #playerModeToolbar button.active {
+      background: #ff9da9;
+      color: #111;
+      border-color: #ffc2ca;
+    }
+
+    #emulatorHolder:fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      min-height: 100vh !important;
+      border-radius: 0 !important;
+      background: #000 !important;
+    }
+
+    #emulatorHolder:fullscreen .emulator-frame {
+      width: 100vw !important;
+      height: 100vh !important;
+      min-height: 100vh !important;
+      border-radius: 0 !important;
+    }
+
+    #emulatorHolder:fullscreen #playerModeToolbar {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+    }
+  </style>
 </head>
+
 <body>
   <div class="page-shell">
     <header class="topbar">
-      <a class="brand" href="#">
-        <img src="logo-rato.png" class="brand-rat" alt="Logo rato" />
+      <a href="#" class="brand" onclick="scrollToUpload(); return false;">
+        <img class="brand-rat" src="logo-rato.png" alt="Logo" />
         <span>67 Emulators in One App</span>
       </a>
 
@@ -30,47 +85,44 @@
     <main class="main-content">
       <section class="hero">
         <div class="hero-67-wrap">
-          <img src="hero-67.png" class="hero-67" alt="67 em estilo rato" />
+          <img class="hero-67" src="hero-67.png" alt="67" />
         </div>
 
         <div class="hero-text-wrap">
-          <img src="hero-texto.png" class="hero-text-img" alt="Emuladores em um app" />
+          <img class="hero-text-img" src="hero-texto.png" alt="Emuladores em um app" />
         </div>
       </section>
 
-      <section id="uploadZone" class="upload-zone">
+      <section class="upload-zone" id="uploadZone">
+        <input id="romInput" type="file" />
+
         <button
           class="console-hotspot console-hotspot-left"
           type="button"
           onclick="document.getElementById('romInput').click()"
+          aria-label="Escolher ROM"
         >
-          <img src="consoles-esquerda.png" class="upload-consoles" alt="Consoles clássicos" />
+          <img class="upload-consoles" src="consoles-esquerda.png" alt="Consoles" />
         </button>
 
         <button
           class="console-hotspot console-hotspot-right"
           type="button"
           onclick="document.getElementById('romInput').click()"
+          aria-label="Escolher ROM"
         >
-          <img src="consoles-direita.png" class="upload-consoles" alt="Consoles Nintendo DS, 3DS e 64" />
+          <img class="upload-consoles" src="consoles-direita.png" alt="Consoles" />
         </button>
 
-        <input
-          id="romInput"
-          type="file"
-          accept=".gb,.gbc,.gba,.nds,.3ds,.cci,.cxi,.z64,.n64,.v64,.nes,.sfc,.smc,.cue,.bin,.iso"
-        />
-
         <label class="upload-card" for="romInput">
-          <span class="upload-icon">↑</span>
-
-          <strong>Envie sua ROM</strong>
-          <small>ou arraste e solte aqui</small>
+          <span class="upload-icon">+</span>
+          <strong>Enviar ROM</strong>
+          <small>Arraste o arquivo ou clique aqui</small>
 
           <span class="browse-button">Escolher arquivo</span>
 
           <em id="fileInfo">
-            Seus arquivos nunca são enviados. Tudo fica no navegador.
+            Seus arquivos nunca são enviados. Tudo roda localmente no navegador.
           </em>
         </label>
       </section>
@@ -78,32 +130,31 @@
       <section class="middle-grid">
         <article class="systems-card">
           <div class="card-image-mask">
-            <img src="card-sistemas.png" class="card-img" alt="Sistemas suportados" />
+            <img class="card-img" src="card-sistemas.png" alt="Sistemas suportados" />
           </div>
         </article>
 
         <article class="preview-card">
-          <div id="emulatorHolder" class="emulator-holder">
+          <div class="emulator-holder" id="emulatorHolder">
             <div class="card-image-mask">
-              <img src="card-preview.png" class="card-img" alt="Prévia do emulador" />
+              <img class="card-img" src="card-preview.png" alt="Preview do jogo" />
             </div>
           </div>
         </article>
       </section>
 
-      <section id="savesPanel" class="saves-panel">
+      <section class="saves-panel" id="savesPanel">
         <div class="panel-title">
           <h2>Meus Saves</h2>
           <p>ROMs salvas localmente neste navegador.</p>
         </div>
 
-        <div id="savesList" class="saves-list"></div>
+        <div class="saves-list" id="savesList"></div>
 
-        <div id="savesEmpty" class="empty-saves">
-          <img src="rato-esquerdo.png" class="empty-rat" alt="Rato" />
-
+        <div class="empty-saves" id="savesEmpty">
+          <img class="empty-rat" src="rato-esquerdo.png" alt="Rato" />
           <strong>Nenhuma ROM salva ainda</strong>
-          <small>Aceite o armazenamento local e salve uma ROM.</small>
+          <small>Envie uma ROM e clique em salvar localmente.</small>
         </div>
       </section>
 
@@ -111,147 +162,269 @@
         <div class="feature-item">
           <span class="feature-icon bolt"></span>
           <div>
-            <h3>Jogue na hora</h3>
-            <p>Sem instalar. Sem espera. Jogue em segundos.</p>
+            <h3>Rápido</h3>
+            <p>Abra ROMs direto no navegador.</p>
           </div>
         </div>
 
         <div class="feature-item">
           <span class="feature-icon shield"></span>
           <div>
-            <h3>100% Seguro</h3>
-            <p>Roda no navegador. Nada é enviado.</p>
+            <h3>Local</h3>
+            <p>O arquivo fica só no seu dispositivo.</p>
           </div>
         </div>
 
         <div class="feature-item">
           <span class="feature-icon monitor"></span>
           <div>
-            <h3>67 Sistemas</h3>
-            <p>Todos os seus favoritos. Um app simples.</p>
+            <h3>Vários sistemas</h3>
+            <p>GB, GBA, DS, 3DS, N64, NES, SNES e PS1.</p>
           </div>
         </div>
 
         <div class="feature-item rat-feature">
           <div>
-            <h3>Feito com carinho</h3>
-            <p>Feito para gamers, por gamers.</p>
+            <h3>Sem conta</h3>
+            <p>Jogue sem login e sem cadastro.</p>
           </div>
 
-          <img src="rato-direito.png" class="feature-rat" alt="Rato dormindo" />
+          <img class="feature-rat" src="rato-direito.png" alt="Rato" />
         </div>
       </section>
     </main>
 
     <footer class="footer">
-      <span>© 2026 67 Emulators in One App. Todos os direitos reservados.</span>
-      <span>Política de Privacidade</span>
-      <span>Termos de Uso</span>
+      <span>67 Emulators in One App</span>
+      <span>Feito para jogar no navegador</span>
     </footer>
   </div>
 
-  <div id="cookieBanner" class="cookie-banner">
+  <div class="cookie-banner" id="cookieBanner">
     <div>
-      <strong>Armazenamento local</strong>
+      <strong>Salvar ROMs neste navegador?</strong>
       <p>
-        Este site pode salvar ROMs localmente no seu navegador usando IndexedDB.
-        Nada é enviado para um servidor.
+        Isso usa armazenamento local. Seus arquivos continuam no seu navegador e não são enviados.
       </p>
     </div>
 
     <div class="cookie-actions">
-      <button id="declineStorage" type="button" class="small-button ghost">
-        Não
+      <button class="small-button ghost" type="button" id="declineStorage">
+        Não salvar
       </button>
 
-      <button id="acceptStorage" type="button" class="small-button">
+      <button class="small-button" type="button" id="acceptStorage">
         Aceitar
       </button>
     </div>
   </div>
 
-  <div id="saveRomModal" class="modal-backdrop hidden">
+  <div class="modal-backdrop hidden" id="saveRomModal">
     <div class="modal">
-      <h3>Salvar esta ROM?</h3>
-      <p id="saveRomName">ROM</p>
-      <small id="saveRomSize">Tamanho</small>
+      <h3>Salvar ROM?</h3>
+
+      <p id="saveRomName">Nome da ROM</p>
+      <small id="saveRomSize">Sistema e tamanho</small>
 
       <div class="modal-actions">
-        <button id="saveRomNo" type="button" class="small-button ghost">
-          Só jogar agora
+        <button class="small-button ghost" type="button" id="saveRomNo">
+          Agora não
         </button>
 
-        <button id="saveRomYes" type="button" class="small-button">
-          Salvar localmente
+        <button class="small-button" type="button" id="saveRomYes">
+          Salvar
         </button>
       </div>
     </div>
   </div>
 
   <script src="script.js"></script>
+
+  <script>
+    (function () {
+      let currentMode = "small";
+
+      function getHeight(mode) {
+        const isMobile = window.innerWidth <= 780;
+
+        if (mode === "big") {
+          return isMobile ? "520px" : "720px";
+        }
+
+        return isMobile ? "330px" : "420px";
+      }
+
+      function setPlayerMode(mode, requestFullScreen) {
+        currentMode = mode;
+
+        const holder = document.getElementById("emulatorHolder");
+
+        if (!holder) {
+          return;
+        }
+
+        const iframe = holder.querySelector(".emulator-frame");
+
+        if (!iframe) {
+          return;
+        }
+
+        const previewCard = holder.closest(".preview-card");
+        const middleGrid = holder.closest(".middle-grid");
+        const systemsCard = middleGrid ? middleGrid.querySelector(".systems-card") : null;
+
+        const isBig = mode === "big";
+        const height = getHeight(mode);
+
+        if (middleGrid) {
+          middleGrid.style.setProperty("display", "grid", "important");
+          middleGrid.style.setProperty("grid-template-columns", isBig ? "1fr" : "0.95fr 1.05fr", "important");
+          middleGrid.style.setProperty("gap", isBig ? "0" : "16px", "important");
+          middleGrid.style.setProperty("width", "min(1280px, calc(100% - 70px))", "important");
+        }
+
+        if (systemsCard) {
+          systemsCard.style.setProperty("display", isBig ? "none" : "block", "important");
+        }
+
+        if (previewCard) {
+          previewCard.classList.add("is-playing");
+          previewCard.style.setProperty("width", "100%", "important");
+          previewCard.style.setProperty("height", height, "important");
+          previewCard.style.setProperty("min-height", height, "important");
+          previewCard.style.setProperty("max-height", "none", "important");
+          previewCard.style.setProperty("overflow", "hidden", "important");
+          previewCard.style.setProperty("padding", "0", "important");
+          previewCard.style.setProperty("background", "#000", "important");
+          previewCard.style.setProperty("border", "1px solid #3a3a3a", "important");
+          previewCard.style.setProperty("border-radius", "18px", "important");
+          previewCard.style.setProperty("box-shadow", "0 12px 40px rgba(0, 0, 0, 0.35)", "important");
+        }
+
+        holder.style.setProperty("width", "100%", "important");
+        holder.style.setProperty("height", height, "important");
+        holder.style.setProperty("min-height", height, "important");
+        holder.style.setProperty("max-height", "none", "important");
+        holder.style.setProperty("overflow", "hidden", "important");
+        holder.style.setProperty("display", "block", "important");
+        holder.style.setProperty("background", "#000", "important");
+        holder.style.setProperty("border-radius", "18px", "important");
+        holder.style.setProperty("position", "relative", "important");
+
+        iframe.style.setProperty("width", "100%", "important");
+        iframe.style.setProperty("height", height, "important");
+        iframe.style.setProperty("min-height", height, "important");
+        iframe.style.setProperty("max-height", "none", "important");
+        iframe.style.setProperty("display", "block", "important");
+        iframe.style.setProperty("border", "0", "important");
+        iframe.style.setProperty("background", "#000", "important");
+        iframe.style.setProperty("border-radius", "18px", "important");
+
+        updateButtons();
+
+        if (requestFullScreen && holder.requestFullscreen) {
+          holder.requestFullscreen();
+        }
+      }
+
+      function makeToolbar() {
+        const holder = document.getElementById("emulatorHolder");
+
+        if (!holder) {
+          return;
+        }
+
+        if (document.getElementById("playerModeToolbar")) {
+          return;
+        }
+
+        const toolbar = document.createElement("div");
+        toolbar.id = "playerModeToolbar";
+
+        const smallButton = document.createElement("button");
+        smallButton.type = "button";
+        smallButton.textContent = "Telinha";
+        smallButton.dataset.mode = "small";
+
+        smallButton.onclick = function () {
+          setPlayerMode("small", false);
+        };
+
+        const bigButton = document.createElement("button");
+        bigButton.type = "button";
+        bigButton.textContent = "Tela grande";
+        bigButton.dataset.mode = "big";
+
+        bigButton.onclick = function () {
+          setPlayerMode("big", false);
+        };
+
+        const fullButton = document.createElement("button");
+        fullButton.type = "button";
+        fullButton.textContent = "Tela cheia";
+        fullButton.dataset.mode = "fullscreen";
+
+        fullButton.onclick = function () {
+          setPlayerMode("big", true);
+        };
+
+        toolbar.appendChild(smallButton);
+        toolbar.appendChild(bigButton);
+        toolbar.appendChild(fullButton);
+
+        holder.appendChild(toolbar);
+
+        updateButtons();
+      }
+
+      function updateButtons() {
+        const buttons = document.querySelectorAll("#playerModeToolbar button");
+
+        buttons.forEach(function (button) {
+          button.classList.remove("active");
+
+          if (button.dataset.mode === currentMode) {
+            button.classList.add("active");
+          }
+        });
+      }
+
+      function applyWhenGameOpens() {
+        const holder = document.getElementById("emulatorHolder");
+
+        if (!holder) {
+          return;
+        }
+
+        const iframe = holder.querySelector(".emulator-frame");
+
+        if (iframe) {
+          makeToolbar();
+          setPlayerMode(currentMode, false);
+        }
+      }
+
+      const observer = new MutationObserver(function () {
+        setTimeout(applyWhenGameOpens, 50);
+      });
+
+      window.addEventListener("load", function () {
+        const holder = document.getElementById("emulatorHolder");
+
+        if (holder) {
+          observer.observe(holder, {
+            childList: true,
+            subtree: true
+          });
+        }
+
+        applyWhenGameOpens();
+      });
+
+      window.addEventListener("resize", function () {
+        applyWhenGameOpens();
+      });
+    })();
+  </script>
 </body>
 </html>
-
-<style>
-  body:has(.emulator-frame) .middle-grid {
-    width: min(1280px, calc(100% - 70px)) !important;
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 0 !important;
-  }
-
-  body:has(.emulator-frame) .systems-card {
-    display: none !important;
-  }
-
-  body:has(.emulator-frame) .preview-card {
-    width: 100% !important;
-    height: 720px !important;
-    min-height: 720px !important;
-    max-height: none !important;
-    grid-column: 1 / -1 !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-    background: #000 !important;
-    border: 1px solid #3a3a3a !important;
-    border-radius: 18px !important;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35) !important;
-  }
-
-  body:has(.emulator-frame) #emulatorHolder,
-  body:has(.emulator-frame) .emulator-holder {
-    width: 100% !important;
-    height: 720px !important;
-    min-height: 720px !important;
-    max-height: none !important;
-    overflow: hidden !important;
-    display: block !important;
-    background: #000 !important;
-    border-radius: 18px !important;
-  }
-
-  body:has(.emulator-frame) .emulator-frame {
-    width: 100% !important;
-    height: 720px !important;
-    min-height: 720px !important;
-    max-height: none !important;
-    display: block !important;
-    border: 0 !important;
-    background: #000 !important;
-    border-radius: 18px !important;
-  }
-
-  @media (max-width: 780px) {
-    body:has(.emulator-frame) .middle-grid {
-      width: calc(100% - 22px) !important;
-    }
-
-    body:has(.emulator-frame) .preview-card,
-    body:has(.emulator-frame) #emulatorHolder,
-    body:has(.emulator-frame) .emulator-holder,
-    body:has(.emulator-frame) .emulator-frame {
-      height: 520px !important;
-      min-height: 520px !important;
-    }
-  }
-</style>
