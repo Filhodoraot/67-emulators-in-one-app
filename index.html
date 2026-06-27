@@ -408,6 +408,11 @@
         setTimeout(applyWhenGameOpens, 50);
       });
 
+      window.PlayerModeController = {
+        setPlayerMode,
+        applyWhenGameOpens
+      };
+
       window.addEventListener("load", function () {
         const holder = document.getElementById("emulatorHolder");
 
