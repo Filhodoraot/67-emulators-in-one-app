@@ -12,12 +12,7 @@
   <div class="page-shell">
     <header class="topbar">
       <a class="brand" href="#">
-        <img
-          src="logo-rato.png"
-          class="brand-rat"
-          alt="Logo rato"
-        />
-
+        <img src="logo-rato.png" class="brand-rat" alt="Logo rato" />
         <span>67 Emulators in One App</span>
       </a>
 
@@ -35,34 +30,22 @@
     <main class="main-content">
       <section class="hero">
         <div class="hero-67-wrap">
-          <img
-            src="hero-67.png"
-            class="hero-67"
-            alt="67 em estilo rato"
-          />
+          <img src="hero-67.png" class="hero-67" alt="67 em estilo rato" />
         </div>
 
         <div class="hero-text-wrap">
-          <img
-            src="hero-texto.png"
-            class="hero-text-img"
-            alt="Emuladores em um app"
-          />
+          <img src="hero-texto.png" class="hero-text-img" alt="Emuladores em um app" />
         </div>
       </section>
 
       <section id="uploadZone" class="upload-zone">
-        <img
-          src="consoles-esquerda.png"
-          class="upload-consoles upload-consoles-left"
-          alt="Consoles clássicos"
-        />
+        <button class="console-hotspot console-hotspot-left" type="button" onclick="romInput.click()">
+          <img src="consoles-esquerda.png" class="upload-consoles" alt="Consoles clássicos" />
+        </button>
 
-        <img
-          src="consoles-direita.png"
-          class="upload-consoles upload-consoles-right"
-          alt="Consoles Nintendo DS, 3DS e 64"
-        />
+        <button class="console-hotspot console-hotspot-right" type="button" onclick="romInput.click()">
+          <img src="consoles-direita.png" class="upload-consoles" alt="Consoles Nintendo DS, 3DS e 64" />
+        </button>
 
         <input
           id="romInput"
@@ -86,20 +69,79 @@
 
       <section class="middle-grid">
         <article class="systems-card">
-          <img
-            src="card-sistemas.png"
-            class="systems-img"
-            alt="Sistemas suportados"
-          />
+          <h2>Sistemas Suportados</h2>
+          <span class="pink-line"></span>
+
+          <div class="systems-list">
+            <div class="system-item">
+              <div class="system-icon gb-icon"></div>
+              <p>Game Boy<br>/ Color</p>
+            </div>
+
+            <div class="system-item">
+              <div class="system-icon gba-icon"></div>
+              <p>Game Boy<br>Advance</p>
+            </div>
+
+            <div class="system-item">
+              <div class="system-icon ds-icon"></div>
+              <p>Nintendo<br>DS</p>
+            </div>
+
+            <div class="system-item">
+              <div class="system-icon ds-icon dark"></div>
+              <p>Nintendo<br>3DS</p>
+            </div>
+
+            <div class="system-item">
+              <div class="system-icon n64-icon"></div>
+              <p>Nintendo<br>64</p>
+            </div>
+          </div>
+
+          <button class="systems-button" type="button">
+            Ver todos os 67 sistemas
+            <span>›</span>
+          </button>
         </article>
 
         <article class="preview-card">
+          <h2>Jogue na hora. Sem downloads.</h2>
+          <span class="pink-line"></span>
+
           <div id="emulatorHolder" class="emulator-holder">
-            <img
-              src="card-preview.png"
-              class="preview-img"
-              alt="Prévia do emulador"
-            />
+            <div class="fake-emulator">
+              <div class="fake-leftbar">
+                <div class="tiny-rat">🐭</div>
+                <span>GB</span>
+              </div>
+
+              <div class="fake-screen">
+                <div class="fake-player"></div>
+              </div>
+
+              <div class="fake-controls">
+                <div class="fake-top-icons">
+                  <span>▣</span>
+                  <span>▣</span>
+                  <span>⋮</span>
+                </div>
+
+                <div class="fake-dpad">
+                  <span></span>
+                </div>
+
+                <button class="fake-a">A</button>
+                <button class="fake-b">B</button>
+
+                <div class="fake-small-buttons">
+                  <span>SELECT</span>
+                  <span>START</span>
+                </div>
+              </div>
+            </div>
+
+            <p class="fake-caption">Game Boy / Color · Pokemon Red (example)</p>
           </div>
         </article>
       </section>
@@ -113,11 +155,7 @@
         <div id="savesList" class="saves-list"></div>
 
         <div id="savesEmpty" class="empty-saves">
-          <img
-            src="rato-esquerdo.png"
-            class="empty-rat"
-            alt="Rato"
-          />
+          <img src="rato-esquerdo.png" class="empty-rat" alt="Rato" />
 
           <strong>Nenhuma ROM salva ainda</strong>
           <small>Aceite o armazenamento local e salve uma ROM.</small>
@@ -155,11 +193,7 @@
             <p>Feito para gamers, por gamers.</p>
           </div>
 
-          <img
-            src="rato-direito.png"
-            class="feature-rat"
-            alt="Rato dormindo"
-          />
+          <img src="rato-direito.png" class="feature-rat" alt="Rato dormindo" />
         </div>
       </section>
     </main>
