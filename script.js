@@ -158,7 +158,7 @@ const systemsByExtension = {
 
 initApp();
 
-romInput.addEventListener("change", () => {
+romInput.addEventListener("change", async () => {
   const file = romInput.files[0];
 
   if (!file) {
@@ -166,7 +166,7 @@ romInput.addEventListener("change", () => {
     return;
   }
 
-  handleRomFile(file, { askToSave: true });
+  await handleRomFile(file, { askToSave: true });
 });
 
 uploadZone.addEventListener("dragover", (event) => {
@@ -187,7 +187,7 @@ uploadZone.addEventListener("dragleave", () => {
   }
 });
 
-uploadZone.addEventListener("drop", (event) => {
+uploadZone.addEventListener("drop", async (event) => {
   event.preventDefault();
 
   const card = document.querySelector(".upload-card");
@@ -202,7 +202,7 @@ uploadZone.addEventListener("drop", (event) => {
     return;
   }
 
-  handleRomFile(file, { askToSave: true });
+  await handleRomFile(file, { askToSave: true });
 });
 
 acceptStorage.addEventListener("click", async () => {
@@ -276,7 +276,13 @@ async function handleRomFile(file, options = {}) {
     return;
   }
 
-  startGame(file, system);
+  try {
+    await startGame(file, system);
+  } catch (error) {
+    console.error(error);
+    showMessage("Não foi possível carregar a ROM. Tenta outro arquivo.");
+    return;
+  }
 
   const isHeavy3DS = system.core === "azahar";
 
@@ -293,17 +299,31 @@ async function handleRomFile(file, options = {}) {
   }
 }
 
-function startGame(file, system) {
+async function startGame(file, system) {
+  const is3DS = system.core === "azahar";
+
   if (romUrl) {
     URL.revokeObjectURL(romUrl);
+    romUrl = null;
   }
 
-  romUrl = URL.createObjectURL(file);
+  let gameUrl = "";
+  let gameBuffer = null;
+
+  if (is3DS) {
+    showMessage(`Preparando ROM 3DS: ${file.name}...`);
+
+    gameBuffer = await file.arrayBuffer();
+  } else {
+    romUrl = URL.createObjectURL(file);
+    gameUrl = romUrl;
+  }
 
   showMessage(`ROM detectada: ${file.name} · ${system.name}`);
 
   openEmulator({
-    gameUrl: romUrl,
+    gameUrl,
+    gameBuffer,
     core: system.core,
     gameName: file.name,
     control: system.control,
@@ -317,7 +337,7 @@ function startGame(file, system) {
   });
 }
 
-function openEmulator({ gameUrl, core, gameName, control, systemName, needsThreads }) {
+function openEmulator({ gameUrl, gameBuffer, core, gameName, control, systemName, needsThreads }) {
   emulatorHolder.innerHTML = "";
 
   const iframe = document.createElement("iframe");
@@ -334,14 +354,68 @@ function openEmulator({ gameUrl, core, gameName, control, systemName, needsThrea
   iframe.style.setProperty("background", "#000", "important");
   iframe.style.setProperty("border-radius", "18px", "important");
 
+  const useBufferMode = Boolean(gameBuffer);
+
   iframe.srcdoc = createEmulatorHtml({
     gameUrl,
     core,
     gameName,
     control,
     systemName,
-    needsThreads
+    needsThreads,
+    useBufferMode
   });
+
+  let transferableBuffer = gameBuffer;
+  let romSent = false;
+
+  function sendRomToIframe() {
+    if (romSent || !transferableBuffer || !iframe.contentWindow) {
+      return;
+    }
+
+    romSent = true;
+
+    iframe.contentWindow.postMessage(
+      {
+        type: "EJS_ROM_BUFFER",
+        fileName: gameName,
+        buffer: transferableBuffer
+      },
+      "*",
+      [transferableBuffer]
+    );
+
+    transferableBuffer = null;
+
+    window.removeEventListener("message", readyHandler);
+  }
+
+  function readyHandler(event) {
+    if (event.source !== iframe.contentWindow) {
+      return;
+    }
+
+    if (!event.data || event.data.type !== "EJS_IFRAME_READY") {
+      return;
+    }
+
+    sendRomToIframe();
+  }
+
+  if (useBufferMode) {
+    window.addEventListener("message", readyHandler);
+
+    iframe.addEventListener(
+      "load",
+      () => {
+        setTimeout(sendRomToIframe, 250);
+      },
+      { once: true }
+    );
+
+    setTimeout(sendRomToIframe, 1500);
+  }
 
   emulatorHolder.appendChild(iframe);
 
@@ -418,14 +492,16 @@ function getSmallPlayerHeight() {
   return "420px";
 }
 
-function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, needsThreads }) {
+function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, needsThreads, useBufferMode }) {
   const safeCore = safeJs(core);
   const safeGameName = safeJs(gameName);
   const safeGameUrl = safeJs(gameUrl);
   const safeControl = safeJs(control || core);
   const safeSystemName = safeJs(systemName || core);
+
   const threadsValue = needsThreads ? "true" : "false";
   const is3DS = core === "azahar" ? "true" : "false";
+  const bufferModeValue = useBufferMode ? "true" : "false";
 
   return `
     <!DOCTYPE html>
@@ -481,6 +557,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
       <script>
         const needsThreads = ${threadsValue};
         const is3DS = ${is3DS};
+        const useBufferMode = ${bufferModeValue};
         const systemName = "${safeSystemName}";
         const coreName = "${safeCore}";
         const notice = document.getElementById("notice");
@@ -490,13 +567,32 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           notice.style.display = "block";
         }
 
+        function loadEmulatorLoader() {
+          if (window.__EJS_loaderStarted) {
+            return;
+          }
+
+          window.__EJS_loaderStarted = true;
+
+          const loader = document.createElement("script");
+          loader.src = "/data/loader.js";
+          loader.onerror = function() {
+            showNotice(
+              "<strong>Erro no loader.</strong><br>" +
+              "Não consegui carregar /data/loader.js."
+            );
+          };
+
+          document.body.appendChild(loader);
+        }
+
         window.addEventListener("error", function(event) {
           console.error(event.error || event.message);
 
           if (is3DS) {
             showNotice(
               "<strong>3DS deu erro.</strong><br>" +
-              "Confira se a ROM está extraída e descriptografada. O core já está carregando certo."
+              "O core carregou, mas a ROM pode estar criptografada ou pesada demais."
             );
           }
         });
@@ -515,7 +611,6 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
         window.EJS_player = "#game";
         window.EJS_core = coreName;
         window.EJS_gameName = "${safeGameName}";
-        window.EJS_gameUrl = "${safeGameUrl}";
         window.EJS_pathtodata = "/data/";
         window.EJS_startOnLoaded = true;
         window.EJS_color = "#ff9da9";
@@ -549,9 +644,62 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
             }
           }, 700);
         }
-      <\/script>
 
-      <script src="/data/loader.js"><\/script>
+        if (useBufferMode) {
+          showNotice(
+            "<strong>Preparando 3DS...</strong><br>" +
+            "Carregando a ROM direto na memória, sem blob URL."
+          );
+
+          window.addEventListener("message", function receiveRom(event) {
+            if (!event.data || event.data.type !== "EJS_ROM_BUFFER") {
+              return;
+            }
+
+            window.removeEventListener("message", receiveRom);
+
+            try {
+              const uint8 = new Uint8Array(event.data.buffer);
+
+              window.EJS_gameUrl = new Blob([uint8], {
+                type: "application/octet-stream"
+              });
+
+              notice.style.display = "none";
+
+              loadEmulatorLoader();
+            } catch (error) {
+              console.error(error);
+
+              showNotice(
+                "<strong>Erro ao receber a ROM.</strong><br>" +
+                "O navegador não conseguiu passar o arquivo pro emulador."
+              );
+            }
+          });
+
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage(
+              {
+                type: "EJS_IFRAME_READY"
+              },
+              "*"
+            );
+          }
+
+          setTimeout(function() {
+            if (!window.__EJS_loaderStarted) {
+              showNotice(
+                "<strong>Esperando a ROM...</strong><br>" +
+                "Se travar aqui, recarrega a página e escolhe o arquivo de novo."
+              );
+            }
+          }, 5000);
+        } else {
+          window.EJS_gameUrl = "${safeGameUrl}";
+          loadEmulatorLoader();
+        }
+      <\/script>
     </body>
     </html>
   `;
@@ -798,7 +946,7 @@ async function playSavedRom(id) {
       lastModified: record.lastModified || Date.now()
     });
 
-    startGame(file, system);
+    await startGame(file, system);
   } catch (error) {
     console.error(error);
     showMessage("Não foi possível abrir a ROM salva.");
