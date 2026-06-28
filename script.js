@@ -24,232 +24,200 @@ const CONSENT_KEY = "sixtySevenEmulatorsStorageConsent";
 let romUrl = null;
 let pendingSave = null;
 
-const compressedExtensions = ["7z", "zip", "rar"];
+const compressedExtensions = ["7z", "zip", "rar", "tar", "gz"];
+
+const threeDSExtensions = [
+  "3ds",
+  "3dz",
+  "cci",
+  "cxi",
+  "cia",
+  "app",
+  "ncch",
+  "zcci",
+  "zcxi",
+  "z3dsx",
+  "zcia"
+];
 
 const systemsByExtension = {
-  gb: {
-    core: "gb",
-    name: "Game Boy",
-    short: "GB",
-    control: "gb",
-    needsThreads: false
-  },
+  gb: makeSystem("gb", "Game Boy", "GB", "gb", false),
+  gbc: makeSystem("gb", "Game Boy Color", "GBC", "gb", false),
+  gba: makeSystem("gba", "Game Boy Advance", "GBA", "gba", false),
 
-  gbc: {
-    core: "gb",
-    name: "Game Boy Color",
-    short: "GBC",
-    control: "gb",
-    needsThreads: false
-  },
+  nds: makeSystem("nds", "Nintendo DS", "DS", "nds", false),
+  dsi: makeSystem("nds", "Nintendo DS", "DS", "nds", false),
 
-  gba: {
-    core: "gba",
-    name: "Game Boy Advance",
-    short: "GBA",
-    control: "gba",
-    needsThreads: false
-  },
+  z64: makeSystem("n64", "Nintendo 64", "N64", "n64", false),
+  n64: makeSystem("n64", "Nintendo 64", "N64", "n64", false),
+  v64: makeSystem("n64", "Nintendo 64", "N64", "n64", false),
 
-  nds: {
-    core: "nds",
-    name: "Nintendo DS",
-    short: "DS",
-    control: "nds",
-    needsThreads: false
-  },
+  nes: makeSystem("nes", "NES", "NES", "nes", false),
 
-  "3ds": {
-    core: "azahar",
-    name: "Nintendo 3DS",
-    short: "3DS",
-    control: "3ds",
-    needsThreads: true
-  },
+  sfc: makeSystem("snes", "Super Nintendo", "SNES", "snes", false),
+  smc: makeSystem("snes", "Super Nintendo", "SNES", "snes", false),
 
-  cci: {
-    core: "azahar",
-    name: "Nintendo 3DS",
-    short: "3DS",
-    control: "3ds",
-    needsThreads: true
-  },
-
-  cxi: {
-    core: "azahar",
-    name: "Nintendo 3DS",
-    short: "3DS",
-    control: "3ds",
-    needsThreads: true
-  },
-
-  z64: {
-    core: "n64",
-    name: "Nintendo 64",
-    short: "N64",
-    control: "n64",
-    needsThreads: false
-  },
-
-  n64: {
-    core: "n64",
-    name: "Nintendo 64",
-    short: "N64",
-    control: "n64",
-    needsThreads: false
-  },
-
-  v64: {
-    core: "n64",
-    name: "Nintendo 64",
-    short: "N64",
-    control: "n64",
-    needsThreads: false
-  },
-
-  nes: {
-    core: "nes",
-    name: "NES",
-    short: "NES",
-    control: "nes",
-    needsThreads: false
-  },
-
-  sfc: {
-    core: "snes",
-    name: "Super Nintendo",
-    short: "SNES",
-    control: "snes",
-    needsThreads: false
-  },
-
-  smc: {
-    core: "snes",
-    name: "Super Nintendo",
-    short: "SNES",
-    control: "snes",
-    needsThreads: false
-  },
-
-  cue: {
-    core: "psx",
-    name: "PlayStation",
-    short: "PS1",
-    control: "psx",
-    needsThreads: false
-  },
-
-  bin: {
-    core: "psx",
-    name: "PlayStation",
-    short: "PS1",
-    control: "psx",
-    needsThreads: false
-  },
-
-  iso: {
-    core: "psx",
-    name: "PlayStation",
-    short: "PS1",
-    control: "psx",
-    needsThreads: false
-  }
+  cue: makeSystem("psx", "PlayStation", "PS1", "psx", false),
+  bin: makeSystem("psx", "PlayStation", "PS1", "psx", false),
+  iso: makeSystem("psx", "PlayStation", "PS1", "psx", false)
 };
+
+for (const ext of threeDSExtensions) {
+  systemsByExtension[ext] = makeSystem("azahar", "Nintendo 3DS", "3DS", "3ds", true);
+}
 
 initApp();
 
-romInput.addEventListener("change", async () => {
-  const file = romInput.files[0];
+if (romInput) {
+  romInput.accept = [
+    ".gb",
+    ".gbc",
+    ".gba",
+    ".nds",
+    ".dsi",
+    ".3ds",
+    ".3dz",
+    ".cci",
+    ".cxi",
+    ".cia",
+    ".app",
+    ".ncch",
+    ".zcci",
+    ".zcxi",
+    ".z3dsx",
+    ".zcia",
+    ".z64",
+    ".n64",
+    ".v64",
+    ".nes",
+    ".sfc",
+    ".smc",
+    ".cue",
+    ".bin",
+    ".iso"
+  ].join(",");
 
-  if (!file) {
-    showMessage("Seus arquivos nunca são enviados. Tudo fica no navegador.");
-    return;
-  }
+  romInput.addEventListener("change", async () => {
+    const file = romInput.files[0];
 
-  await handleRomFile(file, { askToSave: true });
-});
-
-uploadZone.addEventListener("dragover", (event) => {
-  event.preventDefault();
-
-  const card = document.querySelector(".upload-card");
-
-  if (card) {
-    card.classList.add("dragover");
-  }
-});
-
-uploadZone.addEventListener("dragleave", () => {
-  const card = document.querySelector(".upload-card");
-
-  if (card) {
-    card.classList.remove("dragover");
-  }
-});
-
-uploadZone.addEventListener("drop", async (event) => {
-  event.preventDefault();
-
-  const card = document.querySelector(".upload-card");
-
-  if (card) {
-    card.classList.remove("dragover");
-  }
-
-  const file = event.dataTransfer.files[0];
-
-  if (!file) {
-    return;
-  }
-
-  await handleRomFile(file, { askToSave: true });
-});
-
-acceptStorage.addEventListener("click", async () => {
-  localStorage.setItem(CONSENT_KEY, "accepted");
-  cookieBanner.classList.remove("show");
-  showMessage("Armazenamento local aceito. Agora você pode salvar ROMs.");
-  await renderSavedRoms();
-});
-
-declineStorage.addEventListener("click", async () => {
-  localStorage.setItem(CONSENT_KEY, "declined");
-  cookieBanner.classList.remove("show");
-  showMessage("Armazenamento local recusado. Você ainda pode jogar sem salvar.");
-  await renderSavedRoms();
-});
-
-saveRomYes.addEventListener("click", async () => {
-  if (!pendingSave) {
-    closeSaveModal();
-    return;
-  }
-
-  try {
-    await saveRomToDB(pendingSave.file, pendingSave.system);
-    showMessage(`ROM salva: ${pendingSave.file.name}`);
-    await renderSavedRoms();
-  } catch (error) {
-    console.error(error);
-
-    if (error.name === "QuotaExceededError") {
-      showMessage("Sem espaço suficiente no navegador para salvar esta ROM.");
-    } else {
-      showMessage("Não foi possível salvar esta ROM.");
+    if (!file) {
+      showMessage("Seus arquivos nunca são enviados. Tudo fica no navegador.");
+      return;
     }
-  }
 
-  closeSaveModal();
-});
+    await handleRomFile(file, { askToSave: true });
+  });
+}
 
-saveRomNo.addEventListener("click", () => {
-  closeSaveModal();
-});
+if (uploadZone) {
+  uploadZone.addEventListener("dragover", (event) => {
+    event.preventDefault();
+
+    const card = document.querySelector(".upload-card");
+
+    if (card) {
+      card.classList.add("dragover");
+    }
+  });
+
+  uploadZone.addEventListener("dragleave", () => {
+    const card = document.querySelector(".upload-card");
+
+    if (card) {
+      card.classList.remove("dragover");
+    }
+  });
+
+  uploadZone.addEventListener("drop", async (event) => {
+    event.preventDefault();
+
+    const card = document.querySelector(".upload-card");
+
+    if (card) {
+      card.classList.remove("dragover");
+    }
+
+    const file = event.dataTransfer.files[0];
+
+    if (!file) {
+      return;
+    }
+
+    await handleRomFile(file, { askToSave: true });
+  });
+}
+
+if (acceptStorage) {
+  acceptStorage.addEventListener("click", async () => {
+    localStorage.setItem(CONSENT_KEY, "accepted");
+
+    if (cookieBanner) {
+      cookieBanner.classList.remove("show");
+    }
+
+    showMessage("Armazenamento local aceito. Agora você pode salvar ROMs.");
+    await renderSavedRoms();
+  });
+}
+
+if (declineStorage) {
+  declineStorage.addEventListener("click", async () => {
+    localStorage.setItem(CONSENT_KEY, "declined");
+
+    if (cookieBanner) {
+      cookieBanner.classList.remove("show");
+    }
+
+    showMessage("Armazenamento local recusado. Você ainda pode jogar sem salvar.");
+    await renderSavedRoms();
+  });
+}
+
+if (saveRomYes) {
+  saveRomYes.addEventListener("click", async () => {
+    if (!pendingSave) {
+      closeSaveModal();
+      return;
+    }
+
+    try {
+      await saveRomToDB(pendingSave.file, pendingSave.system);
+      showMessage(`ROM salva: ${pendingSave.file.name}`);
+      await renderSavedRoms();
+    } catch (error) {
+      console.error(error);
+
+      if (error.name === "QuotaExceededError") {
+        showMessage("Sem espaço suficiente no navegador para salvar esta ROM.");
+      } else {
+        showMessage("Não foi possível salvar esta ROM.");
+      }
+    }
+
+    closeSaveModal();
+  });
+}
+
+if (saveRomNo) {
+  saveRomNo.addEventListener("click", () => {
+    closeSaveModal();
+  });
+}
+
+function makeSystem(core, name, short, control, needsThreads) {
+  return {
+    core,
+    name,
+    short,
+    control,
+    needsThreads
+  };
+}
 
 async function initApp() {
   const consent = getStorageConsent();
 
-  if (!consent) {
+  if (!consent && cookieBanner) {
     cookieBanner.classList.add("show");
   }
 
@@ -264,11 +232,6 @@ async function handleRomFile(file, options = {}) {
     return;
   }
 
-  if (extension === "cia") {
-    showMessage("Arquivo .cia não é ideal no navegador. Use .3ds, .cci ou .cxi descriptografado.");
-    return;
-  }
-
   const system = systemsByExtension[extension];
 
   if (!system) {
@@ -276,15 +239,25 @@ async function handleRomFile(file, options = {}) {
     return;
   }
 
+  const is3DS = system.core === "azahar";
+
+  if (is3DS) {
+    showMessage(`ROM 3DS detectada: ${file.name}. Preparando leitura...`);
+  }
+
   try {
     await startGame(file, system);
   } catch (error) {
     console.error(error);
+
+    if (error.name === "NotReadableError") {
+      showMessage("O navegador não conseguiu ler essa ROM. Move ela pra C:\\ROMTESTE\\ e renomeia pra algo simples, tipo jogo.cci.");
+      return;
+    }
+
     showMessage("Não foi possível carregar a ROM. Tenta outro arquivo.");
     return;
   }
-
-  const is3DS = system.core === "azahar";
 
   if (options.askToSave && getStorageConsent() === "accepted" && !is3DS) {
     const alreadySaved = await isRomSaved(file);
@@ -311,14 +284,12 @@ async function startGame(file, system) {
   let gameBuffer = null;
 
   if (is3DS) {
-    showMessage(`Preparando ROM 3DS em Uint8Array: ${file.name}...`);
-    gameBuffer = await file.arrayBuffer();
+    showMessage(`Lendo ROM 3DS em memória: ${file.name}...`);
+    gameBuffer = await readFileAsArrayBuffer(file);
   } else {
     romUrl = URL.createObjectURL(file);
     gameUrl = romUrl;
   }
-
-  showMessage(`ROM detectada: ${file.name} · ${system.name}`);
 
   openEmulator({
     gameUrl,
@@ -330,13 +301,42 @@ async function startGame(file, system) {
     needsThreads: system.needsThreads
   });
 
-  emulatorHolder.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
+  if (emulatorHolder) {
+    emulatorHolder.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
+}
+
+async function readFileAsArrayBuffer(file) {
+  try {
+    return await file.arrayBuffer();
+  } catch (firstError) {
+    console.warn("file.arrayBuffer falhou. Tentando FileReader...", firstError);
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => {
+      reject(reader.error || new Error("FileReader falhou."));
+    };
+
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+
+    reader.readAsArrayBuffer(file);
   });
 }
 
 function openEmulator({ gameUrl, gameBuffer, core, gameName, control, systemName, needsThreads }) {
+  if (!emulatorHolder) {
+    showMessage("Erro: emulatorHolder não existe no HTML.");
+    return;
+  }
+
   emulatorHolder.innerHTML = "";
 
   const iframe = document.createElement("iframe");
@@ -386,7 +386,6 @@ function openEmulator({ gameUrl, gameBuffer, core, gameName, control, systemName
     );
 
     transferableBuffer = null;
-
     window.removeEventListener("message", readyHandler);
   }
 
@@ -430,6 +429,10 @@ function openEmulator({ gameUrl, gameBuffer, core, gameName, control, systemName
 }
 
 function forceSmallPlayerScreen() {
+  if (!emulatorHolder) {
+    return;
+  }
+
   const height = getSmallPlayerHeight();
   const previewCard = emulatorHolder.closest(".preview-card");
   const middleGrid = emulatorHolder.closest(".middle-grid");
@@ -575,6 +578,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
 
           const loader = document.createElement("script");
           loader.src = "/data/loader.js";
+
           loader.onerror = function() {
             showNotice(
               "<strong>Erro no loader.</strong><br>" +
@@ -591,7 +595,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           if (is3DS) {
             showNotice(
               "<strong>3DS deu erro.</strong><br>" +
-              "Se o site carregou o core, a ROM pode estar criptografada ou o navegador não tankou."
+              "A ROM pode estar criptografada, pesada demais ou incompatível com o core do navegador."
             );
           }
         });
@@ -602,7 +606,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           if (is3DS) {
             showNotice(
               "<strong>3DS não iniciou.</strong><br>" +
-              "Use .3ds, .cci ou .cxi extraído e descriptografado."
+              "Use arquivo 3DS descriptografado. Tenta .cci primeiro."
             );
           }
         });
@@ -705,6 +709,10 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
 }
 
 function openSaveModal(file, system) {
+  if (!saveRomModal || !saveRomName || !saveRomSize) {
+    return;
+  }
+
   pendingSave = { file, system };
   saveRomName.textContent = file.name;
   saveRomSize.textContent = `${system.name} · ${formatBytes(file.size)}`;
@@ -713,7 +721,10 @@ function openSaveModal(file, system) {
 
 function closeSaveModal() {
   pendingSave = null;
-  saveRomModal.classList.add("hidden");
+
+  if (saveRomModal) {
+    saveRomModal.classList.add("hidden");
+  }
 }
 
 function getStorageConsent() {
@@ -839,12 +850,26 @@ async function isRomSaved(file) {
 }
 
 async function renderSavedRoms() {
+  if (!savesList || !savesEmpty) {
+    return;
+  }
+
   savesList.innerHTML = "";
 
   if (getStorageConsent() !== "accepted") {
     savesEmpty.style.display = "grid";
-    savesEmpty.querySelector("strong").textContent = "Armazenamento local não aceito";
-    savesEmpty.querySelector("small").textContent = "Aceite o armazenamento local para salvar ROMs.";
+
+    const strong = savesEmpty.querySelector("strong");
+    const small = savesEmpty.querySelector("small");
+
+    if (strong) {
+      strong.textContent = "Armazenamento local não aceito";
+    }
+
+    if (small) {
+      small.textContent = "Aceite o armazenamento local para salvar ROMs.";
+    }
+
     return;
   }
 
@@ -855,15 +880,35 @@ async function renderSavedRoms() {
   } catch (error) {
     console.error(error);
     savesEmpty.style.display = "grid";
-    savesEmpty.querySelector("strong").textContent = "Não foi possível carregar os saves";
-    savesEmpty.querySelector("small").textContent = "Seu navegador pode estar bloqueando IndexedDB.";
+
+    const strong = savesEmpty.querySelector("strong");
+    const small = savesEmpty.querySelector("small");
+
+    if (strong) {
+      strong.textContent = "Não foi possível carregar os saves";
+    }
+
+    if (small) {
+      small.textContent = "Seu navegador pode estar bloqueando IndexedDB.";
+    }
+
     return;
   }
 
   if (records.length === 0) {
     savesEmpty.style.display = "grid";
-    savesEmpty.querySelector("strong").textContent = "Nenhuma ROM salva ainda";
-    savesEmpty.querySelector("small").textContent = "Envie uma ROM e clique em salvar localmente.";
+
+    const strong = savesEmpty.querySelector("strong");
+    const small = savesEmpty.querySelector("small");
+
+    if (strong) {
+      strong.textContent = "Nenhuma ROM salva ainda";
+    }
+
+    if (small) {
+      small.textContent = "Envie uma ROM e clique em salvar localmente.";
+    }
+
     return;
   }
 
@@ -953,11 +998,13 @@ async function playSavedRom(id) {
 }
 
 function getExtension(fileName) {
-  return fileName.split(".").pop().toLowerCase().trim();
+  return String(fileName).split(".").pop().toLowerCase().trim();
 }
 
 function showMessage(message) {
-  fileInfo.textContent = message;
+  if (fileInfo) {
+    fileInfo.textContent = message;
+  }
 }
 
 function safeJs(value) {
@@ -982,21 +1029,30 @@ function formatBytes(bytes) {
 }
 
 function scrollToUpload() {
-  uploadZone.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
+  if (uploadZone) {
+    uploadZone.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
 }
 
 function scrollToSaves() {
-  document.getElementById("savesPanel").scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
+  const savesPanel = document.getElementById("savesPanel");
+
+  if (savesPanel) {
+    savesPanel.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
 }
 
+window.scrollToUpload = scrollToUpload;
+window.scrollToSaves = scrollToSaves;
+
 window.addEventListener("resize", () => {
-  const iframe = emulatorHolder.querySelector(".emulator-frame");
+  const iframe = emulatorHolder ? emulatorHolder.querySelector(".emulator-frame") : null;
 
   if (iframe && !window.PlayerModeController) {
     forceSmallPlayerScreen();
