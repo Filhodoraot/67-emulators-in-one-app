@@ -23,6 +23,7 @@ const CONSENT_KEY = "sixtySevenEmulatorsStorageConsent";
 
 let romUrl = null;
 let pendingSave = null;
+let serviceWorkerReadyPromise = null;
 
 const compressedExtensions = ["7z", "zip", "rar", "tar", "gz"];
 
@@ -221,6 +222,8 @@ function makeSystem(core, name, short, control, needsThreads) {
 }
 
 async function initApp() {
+  initLocalRomServiceWorker();
+
   const consent = getStorageConsent();
 
   if (!consent && cookieBanner) {
@@ -228,6 +231,124 @@ async function initApp() {
   }
 
   await renderSavedRoms();
+}
+
+function initLocalRomServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    console.warn("Service Worker não suportado neste navegador.");
+    return;
+  }
+
+  if (!serviceWorkerReadyPromise) {
+    serviceWorkerReadyPromise = navigator.serviceWorker
+      .register("/service-worker.js?v=3ds-sw-1", {
+        scope: "/"
+      })
+      .then(async (registration) => {
+        await navigator.serviceWorker.ready;
+
+        if (!navigator.serviceWorker.controller) {
+          await waitForController(2500);
+        }
+
+        return registration;
+      })
+      .catch((error) => {
+        console.error("Erro ao registrar Service Worker:", error);
+        throw error;
+      });
+  }
+
+  return serviceWorkerReadyPromise;
+}
+
+function waitForController(timeoutMs) {
+  return new Promise((resolve) => {
+    if (navigator.serviceWorker.controller) {
+      resolve(true);
+      return;
+    }
+
+    let done = false;
+
+    const finish = (value) => {
+      if (done) {
+        return;
+      }
+
+      done = true;
+      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+      resolve(value);
+    };
+
+    const onControllerChange = () => {
+      finish(true);
+    };
+
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+
+    setTimeout(() => {
+      finish(Boolean(navigator.serviceWorker.controller));
+    }, timeoutMs);
+  });
+}
+
+async function ensureServiceWorkerReadyFor3DS() {
+  if (!("serviceWorker" in navigator)) {
+    throw new Error("Este navegador não suporta Service Worker.");
+  }
+
+  await initLocalRomServiceWorker();
+
+  if (!navigator.serviceWorker.controller) {
+    sessionStorage.setItem("needs3dsSwReload", "1");
+    showMessage("Ativando modo 3DS pesado. A página vai recarregar uma vez.");
+    location.reload();
+    throw new Error("Service Worker ainda não controlava a página.");
+  }
+
+  return true;
+}
+
+async function store3DSRomInServiceWorker(file, romId) {
+  await ensureServiceWorkerReadyFor3DS();
+
+  return new Promise((resolve, reject) => {
+    const controller = navigator.serviceWorker.controller;
+
+    if (!controller) {
+      reject(new Error("Service Worker controller não encontrado."));
+      return;
+    }
+
+    const channel = new MessageChannel();
+
+    const timeout = setTimeout(() => {
+      reject(new Error("Service Worker demorou para receber a ROM."));
+    }, 10000);
+
+    channel.port1.onmessage = (event) => {
+      clearTimeout(timeout);
+
+      const data = event.data || {};
+
+      if (data.ok) {
+        resolve(data);
+      } else {
+        reject(new Error(data.error || "Service Worker não conseguiu guardar a ROM."));
+      }
+    };
+
+    controller.postMessage(
+      {
+        type: "STORE_ROM",
+        id: romId,
+        name: file.name,
+        file
+      },
+      [channel.port2]
+    );
+  });
 }
 
 async function handleRomFile(file, options = {}) {
@@ -248,13 +369,18 @@ async function handleRomFile(file, options = {}) {
   const is3DS = system.core === "azahar";
 
   if (is3DS) {
-    showMessage(`ROM 3DS detectada: ${file.name}. Enviando como File direto...`);
+    showMessage(`ROM 3DS detectada: ${file.name}. Preparando modo Service Worker...`);
   }
 
   try {
     await startGame(file, system);
   } catch (error) {
     console.error(error);
+
+    if (String(error.message || "").includes("recarregar")) {
+      return;
+    }
+
     showMessage("Não foi possível carregar a ROM. Tenta outro arquivo.");
     return;
   }
@@ -268,7 +394,7 @@ async function handleRomFile(file, options = {}) {
   }
 
   if (is3DS) {
-    showMessage(`ROM detectada: ${file.name} · Nintendo 3DS experimental. Pode demorar bastante.`);
+    showMessage(`ROM detectada: ${file.name} · 3DS experimental via Service Worker. Pode demorar.`);
   }
 }
 
@@ -281,10 +407,11 @@ async function startGame(file, system) {
   }
 
   let gameUrl = "";
-  let gameFile = null;
 
   if (is3DS) {
-    gameFile = file;
+    const romId = createRomId();
+    await store3DSRomInServiceWorker(file, romId);
+    gameUrl = `/local-rom/${encodeURIComponent(romId)}/${encodeURIComponent(file.name)}`;
   } else {
     romUrl = URL.createObjectURL(file);
     gameUrl = romUrl;
@@ -292,7 +419,6 @@ async function startGame(file, system) {
 
   openEmulator({
     gameUrl,
-    gameFile,
     core: system.core,
     gameName: file.name,
     control: system.control,
@@ -308,7 +434,7 @@ async function startGame(file, system) {
   }
 }
 
-function openEmulator({ gameUrl, gameFile, core, gameName, control, systemName, needsThreads }) {
+function openEmulator({ gameUrl, core, gameName, control, systemName, needsThreads }) {
   if (!emulatorHolder) {
     showMessage("Erro: emulatorHolder não existe no HTML.");
     return;
@@ -330,68 +456,14 @@ function openEmulator({ gameUrl, gameFile, core, gameName, control, systemName, 
   iframe.style.setProperty("background", "#000", "important");
   iframe.style.setProperty("border-radius", "18px", "important");
 
-  const useFileMode = Boolean(gameFile);
-
   iframe.srcdoc = createEmulatorHtml({
     gameUrl,
     core,
     gameName,
     control,
     systemName,
-    needsThreads,
-    useFileMode
+    needsThreads
   });
-
-  let fileToSend = gameFile;
-  let romSent = false;
-
-  function sendRomToIframe() {
-    if (romSent || !fileToSend || !iframe.contentWindow) {
-      return;
-    }
-
-    romSent = true;
-
-    console.log("Enviando 3DS como File direto:", fileToSend.name, fileToSend.size);
-
-    iframe.contentWindow.postMessage(
-      {
-        type: "EJS_ROM_FILE",
-        fileName: gameName,
-        file: fileToSend
-      },
-      "*"
-    );
-
-    fileToSend = null;
-    window.removeEventListener("message", readyHandler);
-  }
-
-  function readyHandler(event) {
-    if (event.source !== iframe.contentWindow) {
-      return;
-    }
-
-    if (!event.data || event.data.type !== "EJS_IFRAME_READY") {
-      return;
-    }
-
-    sendRomToIframe();
-  }
-
-  if (useFileMode) {
-    window.addEventListener("message", readyHandler);
-
-    iframe.addEventListener(
-      "load",
-      () => {
-        setTimeout(sendRomToIframe, 250);
-      },
-      { once: true }
-    );
-
-    setTimeout(sendRomToIframe, 1500);
-  }
 
   emulatorHolder.appendChild(iframe);
 
@@ -472,7 +544,7 @@ function getSmallPlayerHeight() {
   return "420px";
 }
 
-function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, needsThreads, useFileMode }) {
+function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, needsThreads }) {
   const safeCore = safeJs(core);
   const safeGameName = safeJs(gameName);
   const safeGameUrl = safeJs(gameUrl);
@@ -481,7 +553,6 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
 
   const threadsValue = needsThreads ? "true" : "false";
   const is3DS = core === "azahar" ? "true" : "false";
-  const fileModeValue = useFileMode ? "true" : "false";
 
   return `
     <!DOCTYPE html>
@@ -537,7 +608,6 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
       <script>
         const needsThreads = ${threadsValue};
         const is3DS = ${is3DS};
-        const useFileMode = ${fileModeValue};
         const systemName = "${safeSystemName}";
         const coreName = "${safeCore}";
         const notice = document.getElementById("notice");
@@ -573,7 +643,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           if (is3DS) {
             showNotice(
               "<strong>3DS deu erro.</strong><br>" +
-              "A ROM pode estar criptografada, pesada demais ou incompatível com o core do navegador."
+              "Se apareceu URL /local-rom, o Service Worker funcionou, mas o Azahar pode ter pedido a ROM inteira mesmo assim."
             );
           }
         });
@@ -584,7 +654,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           if (is3DS) {
             showNotice(
               "<strong>3DS não iniciou.</strong><br>" +
-              "Use arquivo 3DS descriptografado. Tenta .cci primeiro."
+              "Esse é o modo Service Worker. Se falhar, o core provavelmente ainda está puxando a ROM inteira."
             );
           }
         });
@@ -592,6 +662,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
         window.EJS_player = "#game";
         window.EJS_core = coreName;
         window.EJS_gameName = "${safeGameName}";
+        window.EJS_gameUrl = "${safeGameUrl}";
         window.EJS_pathtodata = "/data/";
         window.EJS_startOnLoaded = true;
         window.EJS_color = "#ff9da9";
@@ -616,6 +687,8 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
         }
 
         if (is3DS) {
+          console.log("3DS usando URL Service Worker:", window.EJS_gameUrl);
+
           setTimeout(function() {
             if (typeof SharedArrayBuffer === "undefined") {
               showNotice(
@@ -626,65 +699,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           }, 700);
         }
 
-        if (useFileMode) {
-          showNotice(
-            "<strong>Preparando 3DS...</strong><br>" +
-            "Mandando a ROM como File direto, sem ler 2 GB na RAM."
-          );
-
-          window.addEventListener("message", function receiveRom(event) {
-            if (!event.data || event.data.type !== "EJS_ROM_FILE") {
-              return;
-            }
-
-            window.removeEventListener("message", receiveRom);
-
-            try {
-              const file = event.data.file;
-
-              if (!file) {
-                throw new Error("Arquivo não recebido.");
-              }
-
-              window.EJS_gameName = file.name || "${safeGameName}";
-              window.EJS_gameUrl = file;
-
-              console.log("3DS File recebido:", file.name, file.size);
-
-              notice.style.display = "none";
-
-              loadEmulatorLoader();
-            } catch (error) {
-              console.error(error);
-
-              showNotice(
-                "<strong>Erro ao receber a ROM.</strong><br>" +
-                "O navegador não conseguiu passar o arquivo pro emulador."
-              );
-            }
-          });
-
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage(
-              {
-                type: "EJS_IFRAME_READY"
-              },
-              "*"
-            );
-          }
-
-          setTimeout(function() {
-            if (!window.__EJS_loaderStarted) {
-              showNotice(
-                "<strong>Esperando a ROM...</strong><br>" +
-                "Se travar aqui, recarrega e escolhe a ROM de novo."
-              );
-            }
-          }, 5000);
-        } else {
-          window.EJS_gameUrl = "${safeGameUrl}";
-          loadEmulatorLoader();
-        }
+        loadEmulatorLoader();
       <\/script>
     </body>
     </html>
@@ -716,6 +731,10 @@ function getStorageConsent() {
 
 function getRomId(file) {
   return `${file.name}__${file.size}__${file.lastModified || 0}`;
+}
+
+function createRomId() {
+  return `rom_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
 function openDB() {
