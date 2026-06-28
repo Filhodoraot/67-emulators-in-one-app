@@ -34,6 +34,9 @@ const threeDSExtensions = [
   "cia",
   "app",
   "ncch",
+  "3dsx",
+  "elf",
+  "axf",
   "zcci",
   "zcxi",
   "z3dsx",
@@ -82,6 +85,9 @@ if (romInput) {
     ".cia",
     ".app",
     ".ncch",
+    ".3dsx",
+    ".elf",
+    ".axf",
     ".zcci",
     ".zcxi",
     ".z3dsx",
@@ -242,19 +248,13 @@ async function handleRomFile(file, options = {}) {
   const is3DS = system.core === "azahar";
 
   if (is3DS) {
-    showMessage(`ROM 3DS detectada: ${file.name}. Preparando leitura...`);
+    showMessage(`ROM 3DS detectada: ${file.name}. Enviando como File direto...`);
   }
 
   try {
     await startGame(file, system);
   } catch (error) {
     console.error(error);
-
-    if (error.name === "NotReadableError") {
-      showMessage("O navegador não conseguiu ler essa ROM. Move ela pra C:\\ROMTESTE\\ e renomeia pra algo simples, tipo jogo.cci.");
-      return;
-    }
-
     showMessage("Não foi possível carregar a ROM. Tenta outro arquivo.");
     return;
   }
@@ -268,7 +268,7 @@ async function handleRomFile(file, options = {}) {
   }
 
   if (is3DS) {
-    showMessage(`ROM detectada: ${file.name} · Nintendo 3DS experimental. Pode demorar.`);
+    showMessage(`ROM detectada: ${file.name} · Nintendo 3DS experimental. Pode demorar bastante.`);
   }
 }
 
@@ -281,11 +281,10 @@ async function startGame(file, system) {
   }
 
   let gameUrl = "";
-  let gameBuffer = null;
+  let gameFile = null;
 
   if (is3DS) {
-    showMessage(`Lendo ROM 3DS em memória: ${file.name}...`);
-    gameBuffer = await readFileAsArrayBuffer(file);
+    gameFile = file;
   } else {
     romUrl = URL.createObjectURL(file);
     gameUrl = romUrl;
@@ -293,7 +292,7 @@ async function startGame(file, system) {
 
   openEmulator({
     gameUrl,
-    gameBuffer,
+    gameFile,
     core: system.core,
     gameName: file.name,
     control: system.control,
@@ -309,29 +308,7 @@ async function startGame(file, system) {
   }
 }
 
-async function readFileAsArrayBuffer(file) {
-  try {
-    return await file.arrayBuffer();
-  } catch (firstError) {
-    console.warn("file.arrayBuffer falhou. Tentando FileReader...", firstError);
-  }
-
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onerror = () => {
-      reject(reader.error || new Error("FileReader falhou."));
-    };
-
-    reader.onload = () => {
-      resolve(reader.result);
-    };
-
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-function openEmulator({ gameUrl, gameBuffer, core, gameName, control, systemName, needsThreads }) {
+function openEmulator({ gameUrl, gameFile, core, gameName, control, systemName, needsThreads }) {
   if (!emulatorHolder) {
     showMessage("Erro: emulatorHolder não existe no HTML.");
     return;
@@ -353,7 +330,7 @@ function openEmulator({ gameUrl, gameBuffer, core, gameName, control, systemName
   iframe.style.setProperty("background", "#000", "important");
   iframe.style.setProperty("border-radius", "18px", "important");
 
-  const useUint8ArrayMode = Boolean(gameBuffer);
+  const useFileMode = Boolean(gameFile);
 
   iframe.srcdoc = createEmulatorHtml({
     gameUrl,
@@ -362,30 +339,31 @@ function openEmulator({ gameUrl, gameBuffer, core, gameName, control, systemName
     control,
     systemName,
     needsThreads,
-    useUint8ArrayMode
+    useFileMode
   });
 
-  let transferableBuffer = gameBuffer;
+  let fileToSend = gameFile;
   let romSent = false;
 
   function sendRomToIframe() {
-    if (romSent || !transferableBuffer || !iframe.contentWindow) {
+    if (romSent || !fileToSend || !iframe.contentWindow) {
       return;
     }
 
     romSent = true;
 
+    console.log("Enviando 3DS como File direto:", fileToSend.name, fileToSend.size);
+
     iframe.contentWindow.postMessage(
       {
-        type: "EJS_ROM_UINT8",
+        type: "EJS_ROM_FILE",
         fileName: gameName,
-        buffer: transferableBuffer
+        file: fileToSend
       },
-      "*",
-      [transferableBuffer]
+      "*"
     );
 
-    transferableBuffer = null;
+    fileToSend = null;
     window.removeEventListener("message", readyHandler);
   }
 
@@ -401,7 +379,7 @@ function openEmulator({ gameUrl, gameBuffer, core, gameName, control, systemName
     sendRomToIframe();
   }
 
-  if (useUint8ArrayMode) {
+  if (useFileMode) {
     window.addEventListener("message", readyHandler);
 
     iframe.addEventListener(
@@ -494,7 +472,7 @@ function getSmallPlayerHeight() {
   return "420px";
 }
 
-function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, needsThreads, useUint8ArrayMode }) {
+function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, needsThreads, useFileMode }) {
   const safeCore = safeJs(core);
   const safeGameName = safeJs(gameName);
   const safeGameUrl = safeJs(gameUrl);
@@ -503,7 +481,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
 
   const threadsValue = needsThreads ? "true" : "false";
   const is3DS = core === "azahar" ? "true" : "false";
-  const uint8ModeValue = useUint8ArrayMode ? "true" : "false";
+  const fileModeValue = useFileMode ? "true" : "false";
 
   return `
     <!DOCTYPE html>
@@ -559,7 +537,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
       <script>
         const needsThreads = ${threadsValue};
         const is3DS = ${is3DS};
-        const useUint8ArrayMode = ${uint8ModeValue};
+        const useFileMode = ${fileModeValue};
         const systemName = "${safeSystemName}";
         const coreName = "${safeCore}";
         const notice = document.getElementById("notice");
@@ -648,25 +626,30 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           }, 700);
         }
 
-        if (useUint8ArrayMode) {
+        if (useFileMode) {
           showNotice(
             "<strong>Preparando 3DS...</strong><br>" +
-            "Mandando a ROM como Uint8Array, sem blob."
+            "Mandando a ROM como File direto, sem ler 2 GB na RAM."
           );
 
           window.addEventListener("message", function receiveRom(event) {
-            if (!event.data || event.data.type !== "EJS_ROM_UINT8") {
+            if (!event.data || event.data.type !== "EJS_ROM_FILE") {
               return;
             }
 
             window.removeEventListener("message", receiveRom);
 
             try {
-              const uint8 = new Uint8Array(event.data.buffer);
+              const file = event.data.file;
 
-              window.EJS_gameUrl = uint8;
+              if (!file) {
+                throw new Error("Arquivo não recebido.");
+              }
 
-              console.log("3DS Uint8Array recebido:", uint8.length);
+              window.EJS_gameName = file.name || "${safeGameName}";
+              window.EJS_gameUrl = file;
+
+              console.log("3DS File recebido:", file.name, file.size);
 
               notice.style.display = "none";
 
