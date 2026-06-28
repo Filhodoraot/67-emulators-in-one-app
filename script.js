@@ -284,9 +284,9 @@ async function handleRomFile(file, options = {}) {
     return;
   }
 
-  const isHeavy3DS = system.core === "azahar";
+  const is3DS = system.core === "azahar";
 
-  if (options.askToSave && getStorageConsent() === "accepted" && !isHeavy3DS) {
+  if (options.askToSave && getStorageConsent() === "accepted" && !is3DS) {
     const alreadySaved = await isRomSaved(file);
 
     if (!alreadySaved) {
@@ -294,8 +294,8 @@ async function handleRomFile(file, options = {}) {
     }
   }
 
-  if (isHeavy3DS) {
-    showMessage(`ROM detectada: ${file.name} · Nintendo 3DS experimental. Pode demorar 1 a 3 minutos.`);
+  if (is3DS) {
+    showMessage(`ROM detectada: ${file.name} · Nintendo 3DS experimental. Pode demorar.`);
   }
 }
 
@@ -311,8 +311,7 @@ async function startGame(file, system) {
   let gameBuffer = null;
 
   if (is3DS) {
-    showMessage(`Preparando ROM 3DS: ${file.name}...`);
-
+    showMessage(`Preparando ROM 3DS em Uint8Array: ${file.name}...`);
     gameBuffer = await file.arrayBuffer();
   } else {
     romUrl = URL.createObjectURL(file);
@@ -354,7 +353,7 @@ function openEmulator({ gameUrl, gameBuffer, core, gameName, control, systemName
   iframe.style.setProperty("background", "#000", "important");
   iframe.style.setProperty("border-radius", "18px", "important");
 
-  const useBufferMode = Boolean(gameBuffer);
+  const useUint8ArrayMode = Boolean(gameBuffer);
 
   iframe.srcdoc = createEmulatorHtml({
     gameUrl,
@@ -363,7 +362,7 @@ function openEmulator({ gameUrl, gameBuffer, core, gameName, control, systemName
     control,
     systemName,
     needsThreads,
-    useBufferMode
+    useUint8ArrayMode
   });
 
   let transferableBuffer = gameBuffer;
@@ -378,7 +377,7 @@ function openEmulator({ gameUrl, gameBuffer, core, gameName, control, systemName
 
     iframe.contentWindow.postMessage(
       {
-        type: "EJS_ROM_BUFFER",
+        type: "EJS_ROM_UINT8",
         fileName: gameName,
         buffer: transferableBuffer
       },
@@ -403,7 +402,7 @@ function openEmulator({ gameUrl, gameBuffer, core, gameName, control, systemName
     sendRomToIframe();
   }
 
-  if (useBufferMode) {
+  if (useUint8ArrayMode) {
     window.addEventListener("message", readyHandler);
 
     iframe.addEventListener(
@@ -492,7 +491,7 @@ function getSmallPlayerHeight() {
   return "420px";
 }
 
-function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, needsThreads, useBufferMode }) {
+function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, needsThreads, useUint8ArrayMode }) {
   const safeCore = safeJs(core);
   const safeGameName = safeJs(gameName);
   const safeGameUrl = safeJs(gameUrl);
@@ -501,7 +500,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
 
   const threadsValue = needsThreads ? "true" : "false";
   const is3DS = core === "azahar" ? "true" : "false";
-  const bufferModeValue = useBufferMode ? "true" : "false";
+  const uint8ModeValue = useUint8ArrayMode ? "true" : "false";
 
   return `
     <!DOCTYPE html>
@@ -557,7 +556,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
       <script>
         const needsThreads = ${threadsValue};
         const is3DS = ${is3DS};
-        const useBufferMode = ${bufferModeValue};
+        const useUint8ArrayMode = ${uint8ModeValue};
         const systemName = "${safeSystemName}";
         const coreName = "${safeCore}";
         const notice = document.getElementById("notice");
@@ -592,7 +591,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           if (is3DS) {
             showNotice(
               "<strong>3DS deu erro.</strong><br>" +
-              "O core carregou, mas a ROM pode estar criptografada ou pesada demais."
+              "Se o site carregou o core, a ROM pode estar criptografada ou o navegador não tankou."
             );
           }
         });
@@ -603,7 +602,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
           if (is3DS) {
             showNotice(
               "<strong>3DS não iniciou.</strong><br>" +
-              "Use .3ds, .cci ou .cxi extraído e descriptografado. Se for .cia, .7z ou criptografado, pode falhar."
+              "Use .3ds, .cci ou .cxi extraído e descriptografado."
             );
           }
         });
@@ -639,20 +638,20 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
             if (typeof SharedArrayBuffer === "undefined") {
               showNotice(
                 "<strong>Aviso do 3DS:</strong><br>" +
-                "SharedArrayBuffer ainda está bloqueado. Confira o arquivo _headers e faça novo deploy."
+                "SharedArrayBuffer está bloqueado. Confere o _headers."
               );
             }
           }, 700);
         }
 
-        if (useBufferMode) {
+        if (useUint8ArrayMode) {
           showNotice(
             "<strong>Preparando 3DS...</strong><br>" +
-            "Carregando a ROM direto na memória, sem blob URL."
+            "Mandando a ROM como Uint8Array, sem blob."
           );
 
           window.addEventListener("message", function receiveRom(event) {
-            if (!event.data || event.data.type !== "EJS_ROM_BUFFER") {
+            if (!event.data || event.data.type !== "EJS_ROM_UINT8") {
               return;
             }
 
@@ -661,9 +660,9 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
             try {
               const uint8 = new Uint8Array(event.data.buffer);
 
-              window.EJS_gameUrl = new Blob([uint8], {
-                type: "application/octet-stream"
-              });
+              window.EJS_gameUrl = uint8;
+
+              console.log("3DS Uint8Array recebido:", uint8.length);
 
               notice.style.display = "none";
 
@@ -691,7 +690,7 @@ function createEmulatorHtml({ gameUrl, core, gameName, control, systemName, need
             if (!window.__EJS_loaderStarted) {
               showNotice(
                 "<strong>Esperando a ROM...</strong><br>" +
-                "Se travar aqui, recarrega a página e escolhe o arquivo de novo."
+                "Se travar aqui, recarrega e escolhe a ROM de novo."
               );
             }
           }, 5000);
